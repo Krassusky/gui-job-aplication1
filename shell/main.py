@@ -50,7 +50,7 @@ _LOADING_HTML = """\
 </style>
 </head>
 <body>
-  <div class="logo">AutoApply</div>
+  <div class="logo">JobApply Assistant</div>
   <div class="spinner"></div>
   <div class="status">Starting...</div>
   <div class="error" id="error"></div>
@@ -77,7 +77,7 @@ _ERROR_HTML_TEMPLATE = """\
 </style>
 </head>
 <body>
-  <div class="logo">AutoApply</div>
+  <div class="logo">JobApply Assistant</div>
   <div class="error">{message}</div>
 </body>
 </html>
@@ -177,7 +177,7 @@ def launch_gui(host: str = "127.0.0.1", port: int = 5000) -> None:
 
     # 3. Create window with loading HTML
     window = webview.create_window(
-        title="AutoApply",
+        title="JobApply Assistant",
         html=_LOADING_HTML,
         width=1280,
         height=800,

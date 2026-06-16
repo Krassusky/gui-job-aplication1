@@ -266,7 +266,7 @@ export async function loadApplyMode() {
   try {
     const res = await fetch('/api/config');
     const cfg = await res.json();
-    const mode = (cfg.bot && cfg.bot.apply_mode) || 'full_auto';
+    const mode = (cfg.bot && cfg.bot.apply_mode) || 'review';
     const sel = document.getElementById('apply-mode-select');
     if (sel) sel.value = mode;
 

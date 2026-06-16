@@ -99,10 +99,10 @@ class TestBotConfig:
         # Act
         bot = BotConfig()
         # Assert
-        assert bot.enabled_platforms == ["linkedin", "indeed"]
+        assert bot.enabled_platforms == ["linkedin"]
         assert bot.min_match_score == 75
-        assert bot.max_applications_per_day == 50
-        assert bot.delay_between_applications_seconds == 45
+        assert bot.max_applications_per_day == 15
+        assert bot.delay_between_applications_seconds == 60
         assert bot.search_interval_seconds == 1800
         assert bot.watch_mode is False
         assert bot.cover_letter_template == ""

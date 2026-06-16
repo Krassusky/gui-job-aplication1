@@ -139,12 +139,12 @@ class LatexConfig(BaseModel):
 
 
 class BotConfig(BaseModel):
-    enabled_platforms: list[str] = ["linkedin", "indeed"]
+    enabled_platforms: list[str] = ["linkedin"]
     min_match_score: int = 75
-    max_applications_per_day: int = 50
-    delay_between_applications_seconds: int = 45
+    max_applications_per_day: int = 15
+    delay_between_applications_seconds: int = 60
     search_interval_seconds: int = 1800
-    apply_mode: str = "full_auto"  # "full_auto" | "review" | "watch"
+    apply_mode: str = "review"  # "full_auto" | "review" | "watch"
     watch_mode: bool = False  # Deprecated: use apply_mode instead
     cover_letter_enabled: bool = True
     cover_letter_template: str = ""
