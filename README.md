@@ -15,17 +15,37 @@ A customized fork of [AutoApply](https://github.com/AbhishekMandapmalvi/AutoAppl
 
 No Docker required. Everything runs locally on Windows.
 
+**Download (latest release):** https://github.com/Krassusky/gui-job-aplication1/releases/latest
+
 ---
 
 ## For your friend (end user)
 
-1. Install **JobApply Assistant** from the `.exe` you build (see below)
-2. Run the setup wizard — upload CV, set job titles and locations
+### Download from GitHub
+
+1. Open **https://github.com/Krassusky/gui-job-aplication1/releases/latest**
+2. Download **`JobApplyAssistant-X.Y.Z-win-x64.zip`** (Assets section)
+3. Extract the zip to a folder (e.g. `C:\JobApplyAssistant`)
+4. Run **`JobApplyAssistant.exe`**
+5. Install **Google Chrome** if prompted
+6. If Windows SmartScreen warns → **More info → Run anyway**
+
+See also **`LEIA-ME.txt`** inside the zip (Portuguese quick start).
+
+### Daily use
+
+1. Follow the setup wizard — upload CV, set job titles and locations
+2. Use the **Guia** tab for step-by-step help
 3. Log into LinkedIn once inside the app
 4. Click **Start** — matching jobs appear in the queue
 5. For each job: review the cover letter → **Approve & Apply** or **Skip**
 
-Data is stored at `C:\Users\<name>\.autoapply\`.
+### Updates
+
+- **In the app:** Configurações → Atualizações → **Atualizar agora** (banner appears when a new version exists)
+- **Manual:** download the new zip from GitHub Releases and replace the folder
+
+Data is stored at `C:\Users\<name>\.autoapply\` and is kept across updates.
 
 ---
 
@@ -49,7 +69,7 @@ playwright install chromium
 py run.py --gui
 ```
 
-Or double-click `start.bat` after setup.
+Or in PowerShell: `.\start.bat` (or double-click `start.bat` in File Explorer)
 
 ### Run tests
 
@@ -67,6 +87,39 @@ Or double-click `start.bat` after setup.
 Output: `dist\JobApplyAssistant\JobApplyAssistant.exe` — zip that folder and send it to him.
 
 **Note:** Windows SmartScreen may warn on unsigned builds → **More info → Run anyway**.
+
+---
+
+## Publishing updates (for you)
+
+Your friend can update from **Configurações → Atualizações** inside the app.
+
+### Release a new version
+
+1. Bump the version in `pyproject.toml` (e.g. `1.0.0` → `1.0.1`)
+2. Commit and push to GitHub
+3. Create and push a tag (must start with `v`):
+
+```powershell
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+4. GitHub Actions builds `JobApplyAssistant-x.y.z-win-x64.zip` and publishes it on **Releases**
+5. Your friend gets a banner in the app, or downloads from **https://github.com/Krassusky/gui-job-aplication1/releases/latest**
+
+Data in `C:\Users\<name>\.autoapply\` is kept across updates.
+
+### Publish checklist
+
+Before tagging `v1.0.0` (or next version):
+
+- [ ] Version bumped in `pyproject.toml`
+- [ ] All changes committed and pushed to `master`
+- [ ] Tests pass: `pytest tests/ -q`
+- [ ] Tag matches version: `git tag v1.0.0 && git push origin v1.0.0`
+- [ ] Wait for **Actions → Release** workflow to finish
+- [ ] Confirm zip appears under **GitHub → Releases → Assets**
 
 ---
 

@@ -176,6 +176,11 @@ def score_job(
             kw_score += 5
     score += min(kw_score, 25)
 
+    # Language match bonus (0-10)
+    from core.languages import score_language_match
+
+    score += score_language_match(raw_job.description, criteria.job_languages)
+
     # --- Threshold check ---
     min_score = config.bot.min_match_score
     pass_filter = score >= min_score

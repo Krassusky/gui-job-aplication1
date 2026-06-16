@@ -55,6 +55,11 @@ class UserProfile(BaseModel):
     portfolio_url: str | None = None
     fallback_resume_path: str | None = None
     screening_answers: dict = {}
+    spoken_languages: list[dict[str, str]] = [
+        {"code": "pt", "level": "native"},
+        {"code": "en", "level": "fluent"},
+        {"code": "es", "level": "fluent"},
+    ]
 
     # Backward-compatible property — used by AI engine prompts and Lever/Indeed
     @property
@@ -106,6 +111,7 @@ class SearchCriteria(BaseModel):
     keywords_include: list[str] = []
     keywords_exclude: list[str] = []
     experience_levels: list[str] = ["mid", "senior"]
+    job_languages: list[str] = ["pt", "en", "es"]
 
 
 class ScheduleConfig(BaseModel):

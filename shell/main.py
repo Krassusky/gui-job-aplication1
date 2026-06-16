@@ -155,7 +155,7 @@ def launch_gui(host: str = "127.0.0.1", port: int = 5000) -> None:
     3. Creates a PyWebView window with loading HTML
     4. Polls for Flask readiness
     5. Navigates to Flask URL when ready
-    6. Handles graceful shutdown on window close
+    6. Handles graceful shutdown and exits when the window is closed
 
     Args:
         host: Flask bind host (default 127.0.0.1).
@@ -184,15 +184,19 @@ def launch_gui(host: str = "127.0.0.1", port: int = 5000) -> None:
         min_size=(800, 600),
     )
 
-    # Track whether we should minimize to tray on close
+    # Track app quit state (window close and tray Quit both set this)
     _app_state: dict[str, Any] = {"quitting": False}
 
-    def _on_closing():
-        """Handle window close — minimize to tray unless quitting."""
+    def _quit_app() -> None:
         if _app_state["quitting"]:
-            return True  # allow close
-        window.hide()
-        return False  # prevent close, hide instead
+            return
+        _app_state["quitting"] = True
+        _shutdown(host, port)
+
+    def _on_closing():
+        """Quit the application when the user closes the window."""
+        _quit_app()
+        return True
 
     window.events.closing += _on_closing
 
@@ -203,8 +207,7 @@ def launch_gui(host: str = "127.0.0.1", port: int = 5000) -> None:
 
     def _on_quit():
         """Quit from tray menu."""
-        _app_state["quitting"] = True
-        _shutdown(host, port)
+        _quit_app()
         window.destroy()
 
     def _on_loaded():
@@ -231,4 +234,5 @@ def launch_gui(host: str = "127.0.0.1", port: int = 5000) -> None:
         webview.start()
     finally:
         if not _app_state["quitting"]:
-            _shutdown(host, port)
+            _quit_app()
+    sys.exit(0)

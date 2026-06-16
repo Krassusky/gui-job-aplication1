@@ -42,11 +42,30 @@ export function getLocale() {
 }
 
 /** Load a locale and switch to it. Returns a promise. */
+function _mergeLocales(base, overlay) {
+  const out = { ...base };
+  for (const [k, v] of Object.entries(overlay)) {
+    if (v && typeof v === 'object' && !Array.isArray(v) && base[k] && typeof base[k] === 'object') {
+      out[k] = { ...base[k], ...v };
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
 export async function setLocale(locale) {
   try {
-    const res = await fetch(`/static/locales/${locale}.json`);
-    if (!res.ok) throw new Error(`Locale ${locale} not found (${res.status})`);
-    _strings = await res.json();
+    const enRes = await fetch('/static/locales/en.json');
+    const enStrings = enRes.ok ? await enRes.json() : {};
+    if (locale === 'en') {
+      _strings = enStrings;
+    } else {
+      const res = await fetch(`/static/locales/${locale}.json`);
+      if (!res.ok) throw new Error(`Locale ${locale} not found (${res.status})`);
+      const localeStrings = await res.json();
+      _strings = _mergeLocales(enStrings, localeStrings);
+    }
     _locale = locale;
     _ready = true;
     document.documentElement.lang = locale;
@@ -87,8 +106,8 @@ function detectLocale() {
   const qLang = params.get('lang');
   if (qLang) return qLang;
   const htmlLang = document.documentElement.lang;
-  if (htmlLang && htmlLang !== 'en') return htmlLang;
-  return 'en';
+  if (htmlLang) return htmlLang.split('-')[0];
+  return 'pt';
 }
 
 /**

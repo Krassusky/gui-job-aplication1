@@ -9,6 +9,10 @@ import { loadAnalytics } from './analytics.js';
 import { loadResumes } from './resumes.js';
 import { loadKnowledgeBase } from './knowledge-base.js';
 import { loadSettings, loadApplyMode, loadDefaultResume } from './settings.js';
+import { loadWorkflow } from './workflow.js';
+import { loadUpdatePanel, maybeAutoCheckUpdates } from './updates.js';
+import { initHelp, maybeStartTourOnFirstVisit } from './help.js';
+import { onReady } from './i18n.js';
 
 export function initNavTabs() {
   const tabs = document.querySelectorAll('#navbar .nav-tabs a[role="tab"]');
@@ -44,18 +48,25 @@ export function switchScreen(name) {
   if (el) el.classList.remove('hidden');
 
   // Load data for the screen
+  if (name === 'workflow') loadWorkflow();
   if (name === 'dashboard') { loadFeedHistory(); loadApplyMode(); loadDefaultResume(); }
   if (name === 'applications') loadApplications();
   if (name === 'profile') loadProfileFiles();
   if (name === 'analytics') loadAnalytics();
   if (name === 'resumes') loadResumes();
   if (name === 'knowledge-base') loadKnowledgeBase();
-  if (name === 'settings') loadSettings();
+  if (name === 'settings') { loadSettings(); loadUpdatePanel(); }
 }
 
 export function showApp() {
   document.getElementById('wizard-overlay').classList.add('hidden');
   document.getElementById('navbar').classList.remove('hidden');
   document.getElementById('app-screens').classList.remove('hidden');
-  switchScreen('dashboard');
+  switchScreen('workflow');
+  loadWorkflow();
+  onReady(() => {
+    initHelp();
+    maybeStartTourOnFirstVisit();
+    setTimeout(() => maybeAutoCheckUpdates(), 2500);
+  });
 }

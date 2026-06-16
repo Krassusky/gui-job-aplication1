@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -338,9 +338,10 @@
      NAVBAR
      ════════════════════════════════════════════════════════════════ -->
 <nav id="navbar" class="hidden" aria-label="Main navigation">
-  <div class="logo" aria-hidden="true">Auto<span>Apply</span></div>
+  <div class="logo" aria-hidden="true">Job<span>Apply</span></div>
   <ul class="nav-tabs" role="tablist">
-    <li role="presentation"><a role="tab" class="active" data-screen="dashboard" aria-selected="true" tabindex="0" data-i18n="nav.dashboard">Dashboard</a></li>
+    <li role="presentation"><a role="tab" class="active" data-screen="workflow" aria-selected="true" tabindex="0" data-i18n="nav.workflow">Guia</a></li>
+    <li role="presentation"><a role="tab" data-screen="dashboard" aria-selected="false" tabindex="-1" data-i18n="nav.dashboard">Dashboard</a></li>
     <li role="presentation"><a role="tab" data-screen="applications" aria-selected="false" tabindex="-1" data-i18n="nav.applications">Applications</a></li>
     <li role="presentation"><a role="tab" data-screen="profile" aria-selected="false" tabindex="-1" data-i18n="nav.profile">Profile</a></li>
     <li role="presentation"><a role="tab" data-screen="analytics" aria-selected="false" tabindex="-1" data-i18n="nav.analytics">Analytics</a></li>
@@ -349,6 +350,8 @@
     <li role="presentation"><a role="tab" data-screen="settings" aria-selected="false" tabindex="-1" data-i18n="nav.settings">Settings</a></li>
   </ul>
   <div class="nav-right">
+    <button type="button" class="btn btn-ghost btn-sm" onclick="openHelpCenter()" data-i18n="help.nav_help">Ajuda</button>
+    <button type="button" class="btn btn-ghost btn-sm" onclick="startHelpTour(false)" data-i18n="help.nav_tour">Tour</button>
     <span class="flex items-center gap-sm" id="nav-ai-indicator" role="status" aria-live="polite">
       <span class="dot dot-gray" aria-hidden="true"></span>
       <span>AI</span>
@@ -356,13 +359,121 @@
   </div>
 </nav>
 
+<div id="update-banner" class="update-banner hidden" role="status" aria-live="polite">
+  <div class="update-banner-content">
+    <span id="update-banner-text" class="update-banner-text"></span>
+    <div class="update-banner-actions">
+      <button type="button" class="btn btn-success btn-sm" id="btn-update-now" onclick="runUpdateNow()" data-i18n="updates.update_now">Atualizar agora</button>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="dismissUpdateBanner()" data-i18n="updates.dismiss">Agora não</button>
+    </div>
+  </div>
+  <div id="update-banner-progress-wrap" class="update-progress hidden" aria-hidden="true">
+    <div id="update-banner-progress-bar" class="update-progress-bar"></div>
+  </div>
+</div>
+
 <!-- ════════════════════════════════════════════════════════════════
      SCREENS
      ════════════════════════════════════════════════════════════════ -->
 <main class="main-content hidden" id="app-screens" role="main">
 
+  <!-- WORKFLOW GUIDE -->
+  <div class="screen" id="screen-workflow">
+    <div class="workflow-header">
+      <div class="workflow-header-top">
+        <div>
+          <h2 data-i18n="workflow.title">Guia passo a passo</h2>
+          <p class="subtitle" data-i18n="workflow.subtitle">Siga estas etapas na ordem. Você pode voltar a qualquer momento.</p>
+        </div>
+        <div class="workflow-header-actions">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="openHelpCenter()" data-i18n="help.nav_help">Ajuda</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="startHelpTour(false)" data-i18n="help.start_tour">Iniciar tour</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="workflow-stepper" id="workflow-stepper" role="tablist" aria-label="Workflow steps"></div>
+
+    <!-- Step 1: Profile -->
+    <div class="workflow-panel card" data-wf-step="1">
+      <h3 data-i18n="workflow.step1_title">1. Prepare seu perfil</h3>
+      <p data-i18n="workflow.step1_desc">Preencha seus dados, envie o currículo (PDF) e adicione arquivos de experiência.</p>
+      <ul class="workflow-checklist" id="wf-checklist-1"></ul>
+      <div class="workflow-actions">
+        <button class="btn btn-ghost" onclick="switchScreen('settings')" data-i18n="workflow.open_settings">Abrir Configurações</button>
+        <button class="btn btn-ghost" onclick="switchScreen('profile')" data-i18n="workflow.open_profile">Arquivos de experiência</button>
+        <button class="btn btn-primary" onclick="workflowCompleteStep(1)" data-i18n="workflow.step_done">Concluí — Próximo passo</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Job analysis -->
+    <div class="workflow-panel card hidden" data-wf-step="2">
+      <h3 data-i18n="workflow.step2_title">2. Descubra vagas alinhadas</h3>
+      <p data-i18n="workflow.step2_desc">A IA analisa seu perfil e sugere cargos, palavras-chave e pontos a melhorar. Sem IA? Use o prompt para a extensão Claude no Chrome.</p>
+      <button class="btn btn-primary" id="wf-analyze-jobs-btn" onclick="workflowAnalyzeJobs()" data-i18n="workflow.run_analysis">Analisar meu perfil</button>
+      <div id="wf-jobs-result" class="workflow-result hidden"></div>
+      <div class="workflow-actions">
+        <button class="btn btn-ghost" onclick="workflowGoStep(1)" data-i18n="workflow.back">Voltar</button>
+        <button class="btn btn-primary" onclick="workflowCompleteStep(2)" data-i18n="workflow.step_done">Concluí — Próximo passo</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Configure search + LinkedIn -->
+    <div class="workflow-panel card hidden" data-wf-step="3">
+      <h3 data-i18n="workflow.step3_title">3. Configure a busca e LinkedIn</h3>
+      <p data-i18n="workflow.step3_desc">Aplique as sugestões da análise e faça login no LinkedIn uma vez.</p>
+      <div id="wf-search-suggestions" class="workflow-suggestions hidden"></div>
+      <button class="btn btn-success" id="wf-apply-search-btn" onclick="workflowApplySearch()" data-i18n="workflow.apply_suggestions">Aplicar sugestões à busca</button>
+      <div style="margin-top:16px">
+        <button class="btn btn-ghost" onclick="openLoginBrowser('linkedin')" data-i18n="workflow.linkedin_login">Abrir login LinkedIn</button>
+      </div>
+      <div class="workflow-actions">
+        <button class="btn btn-ghost" onclick="workflowGoStep(2)" data-i18n="workflow.back">Voltar</button>
+        <button class="btn btn-primary" onclick="workflowCompleteStep(3)" data-i18n="workflow.step_done">Concluí — Próximo passo</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Recruiters -->
+    <div class="workflow-panel card hidden" data-wf-step="4">
+      <h3 data-i18n="workflow.step4_title">4. Encontre recrutadores</h3>
+      <p data-i18n="workflow.step4_desc">Expanda seu networking: identifique recrutadores da sua área e mensagens de conexão.</p>
+      <button class="btn btn-primary" onclick="workflowAnalyzeRecruiters()" data-i18n="workflow.run_recruiters">Gerar plano de networking</button>
+      <div id="wf-recruiters-result" class="workflow-result hidden"></div>
+      <div class="workflow-actions">
+        <button class="btn btn-ghost" onclick="workflowGoStep(3)" data-i18n="workflow.back">Voltar</button>
+        <button class="btn btn-primary" onclick="workflowCompleteStep(4)" data-i18n="workflow.step_done">Concluí — Próximo passo</button>
+      </div>
+    </div>
+
+    <!-- Step 5: Reference profiles -->
+    <div class="workflow-panel card hidden" data-wf-step="5">
+      <h3 data-i18n="workflow.step5_title">5. Perfis referência</h3>
+      <p data-i18n="workflow.step5_desc">Aprenda com profissionais de referência na sua área e melhore seu LinkedIn.</p>
+      <button class="btn btn-primary" onclick="workflowAnalyzeReferences()" data-i18n="workflow.run_references">Gerar guia de perfis</button>
+      <div id="wf-references-result" class="workflow-result hidden"></div>
+      <div class="workflow-actions">
+        <button class="btn btn-ghost" onclick="workflowGoStep(4)" data-i18n="workflow.back">Voltar</button>
+        <button class="btn btn-primary" onclick="workflowCompleteStep(5)" data-i18n="workflow.step_done">Concluí — Próximo passo</button>
+      </div>
+    </div>
+
+    <!-- Step 6: Daily apply -->
+    <div class="workflow-panel card hidden" data-wf-step="6">
+      <h3 data-i18n="workflow.step6_title">6. Rotina diária — candidatar-se</h3>
+      <p data-i18n="workflow.step6_desc">Vá ao Dashboard, clique Start, revise cada vaga e clique Aprovar e Candidatar. Máximo 15 por dia.</p>
+      <div class="workflow-tip card" style="background:var(--bg-secondary);margin:16px 0;padding:16px">
+        <strong data-i18n="workflow.step6_tip_title">Lembrete</strong>
+        <p data-i18n="workflow.step6_tip">Modo Revisão está ativo: você aprova cada candidatura antes de enviar.</p>
+      </div>
+      <div class="workflow-actions">
+        <button class="btn btn-ghost" onclick="workflowGoStep(5)" data-i18n="workflow.back">Voltar</button>
+        <button class="btn btn-success btn-lg" onclick="workflowFinish()" data-i18n="workflow.go_dashboard">Ir para o Dashboard</button>
+      </div>
+    </div>
+  </div>
+
   <!-- DASHBOARD -->
-  <div class="screen" id="screen-dashboard">
+  <div class="screen hidden" id="screen-dashboard">
     <div class="card" style="margin-bottom:24px">
       <div class="bot-control">
         <div class="bot-status-text" role="status" aria-live="polite" aria-atomic="true">
@@ -376,14 +487,14 @@
           <div class="bot-stat"><div class="num" id="stat-uptime" aria-label="Uptime">--:--</div><div class="label" aria-hidden="true" data-i18n="dashboard.stat_uptime">Uptime</div></div>
         </div>
         <div class="mode-selector">
-          <label for="apply-mode-select" data-i18n="dashboard.mode_label">Mode:</label>
+          <label for="apply-mode-select" class="has-tip-wrap" data-tip-key="help.tip_apply_mode" data-i18n="dashboard.mode_label">Mode:</label>
           <select id="apply-mode-select" onchange="changeApplyMode(this.value)">
             <option value="full_auto">Full Auto</option>
             <option value="review" selected>Review</option>
             <option value="watch">Watch</option>
           </select>
         </div>
-        <div class="bot-buttons">
+        <div class="bot-buttons has-tip-wrap" data-tip-key="help.tip_start_bot">
           <button class="btn btn-success btn-sm" id="btn-start" onclick="botControl('start')" data-i18n="button.start">Start</button>
           <button class="btn btn-warning btn-sm" id="btn-pause" onclick="botControl('pause')" disabled data-i18n="button.pause">Pause</button>
           <button class="btn btn-danger btn-sm"  id="btn-stop"  onclick="botControl('stop')"  disabled data-i18n="button.stop">Stop</button>
@@ -412,6 +523,27 @@
     <div id="ai-warning-banner" class="alert-warning hidden" role="alert">
       <span class="alert-icon" aria-hidden="true">&#9888;</span>
       <span>No AI provider configured &mdash; using fallback templates. Add an API key in <button type="button" onclick="showScreen('settings')" class="alert-link">Settings &rarr; AI Provider</button> for tailored resumes and cover letters.</span>
+    </div>
+
+    <!-- Tour demo: review card preview (shown during guided tour step 6) -->
+    <div id="tour-review-demo" class="review-card tour-demo-card hidden" aria-hidden="true">
+      <div class="tour-demo-badge" data-i18n="help.tour_demo_label">Exemplo do tour</div>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <h3 data-i18n="help.tour6_demo_title">Analista de Dados — Empresa Exemplo</h3>
+          <div class="review-meta">
+            linkedin &middot; Match score: <strong>87</strong>%
+          </div>
+        </div>
+      </div>
+      <div class="review-section">
+        <h4 data-i18n="review.cover_letter_heading">Carta de apresentação</h4>
+        <div class="tour-demo-letter" data-i18n="help.tour6_demo_letter">Olá, tenho experiência com análise de dados e Python. Gostaria de contribuir com o time...</div>
+      </div>
+      <div class="review-actions tour-demo-actions" aria-hidden="true">
+        <span class="btn btn-success btn-sm" data-i18n="button.approve_and_apply">Aprovar e Candidatar</span>
+        <span class="btn btn-ghost btn-sm" data-i18n="button.skip">Pular</span>
+      </div>
     </div>
 
     <!-- Review Card — shown when bot is awaiting review decision -->
@@ -487,6 +619,7 @@
 
   <!-- APPLICATIONS -->
   <div class="screen hidden" id="screen-applications">
+    <h2 data-i18n="nav.applications">Candidaturas</h2>
     <div class="card" style="margin-bottom:20px">
       <div class="filter-bar">
         <select class="form-control" id="filter-status" onchange="loadApplications()" aria-label="Filter by status">
@@ -933,16 +1066,59 @@
     <h2 data-i18n="settings.screen_title">Settings</h2>
     <div class="card">
       <div class="flex-col gap-lg">
-        <h3 data-i18n="settings.section_language">Language</h3>
+        <h3 data-i18n="settings.section_profile">Profile</h3>
+
+        <h4 class="settings-subheading has-tip-wrap" data-tip-key="help.tip_languages" data-i18n="settings.section_languages">Languages &amp; Idiomas</h4>
+        <p class="subtitle text-dim" data-i18n="settings.languages_help">App language, languages you speak, and languages for job search and applications.</p>
         <div class="settings-grid">
           <div class="form-group">
-            <label for="set-locale" data-i18n="settings.label_language">Language</label>
+            <label for="set-locale" data-i18n="settings.label_app_language">App interface language</label>
             <select class="form-control" id="set-locale" onchange="onLocaleChange()"
-                    aria-label="Select language"></select>
+                    aria-label="Select app language"></select>
           </div>
         </div>
+        <div class="language-skills-grid" id="set-spoken-languages">
+          <div class="language-skill-row">
+            <label><input type="checkbox" id="set-spoken-pt" checked> Português</label>
+            <select class="form-control" id="set-level-pt" aria-label="Portuguese level">
+              <option value="native">Nativo / Native</option>
+              <option value="fluent" selected>Fluente / Fluent</option>
+              <option value="intermediate">Intermediário</option>
+              <option value="basic">Básico</option>
+            </select>
+          </div>
+          <div class="language-skill-row">
+            <label><input type="checkbox" id="set-spoken-en" checked> English / Inglês</label>
+            <select class="form-control" id="set-level-en" aria-label="English level">
+              <option value="native">Native / Nativo</option>
+              <option value="fluent" selected>Fluent / Fluente</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="basic">Basic</option>
+            </select>
+          </div>
+          <div class="language-skill-row">
+            <label><input type="checkbox" id="set-spoken-es" checked> Español / Spanish</label>
+            <select class="form-control" id="set-level-es" aria-label="Spanish level">
+              <option value="native">Nativo / Native</option>
+              <option value="fluent" selected>Fluido / Fluent</option>
+              <option value="intermediate">Intermedio</option>
+              <option value="basic">Básico</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:12px">
+          <label data-i18n="settings.label_job_languages">Search &amp; apply in these languages</label>
+          <div class="flex-row gap-md" style="flex-wrap:wrap; margin-top:8px">
+            <label><input type="checkbox" class="set-job-lang" value="pt" checked> Português</label>
+            <label><input type="checkbox" class="set-job-lang" value="en" checked> English</label>
+            <label><input type="checkbox" class="set-job-lang" value="es" checked> Español</label>
+          </div>
+          <p class="text-dim" style="font-size:.85rem; margin-top:8px" data-i18n="settings.job_languages_help">
+            Used for LinkedIn search, job matching, resume languages section, and application forms.
+          </p>
+        </div>
         <hr>
-        <h3 data-i18n="settings.section_profile">Profile</h3>
+
         <div class="settings-grid">
           <div class="form-group">
             <label data-i18n="form.first_name">First Name</label>
@@ -1035,7 +1211,7 @@
 
         <hr style="border:none; border-top:1px solid var(--border); margin:8px 0;">
         <h3 data-i18n="settings.section_job_preferences">Job Preferences</h3>
-        <div class="form-group">
+        <div class="form-group" id="tour-job-titles-section">
           <label data-i18n="form.job_titles">Job Titles</label>
           <div class="tag-input-container">
             <div class="tag-input-row">
@@ -1258,6 +1434,35 @@
           </div>
         </div>
 
+        <hr style="border:none; border-top:1px solid var(--border); margin:8px 0;">
+        <h3 data-i18n="settings.section_updates">Updates</h3>
+        <p class="subtitle text-dim" style="font-size:.85rem;" data-i18n="settings.updates_help">
+          Check for new versions published on GitHub and install them without leaving the app.
+        </p>
+        <div class="update-panel card" style="background:var(--bg-secondary); padding:16px;">
+          <div class="update-version-row">
+            <span data-i18n="updates.current_version">Current version:</span>
+            <strong id="update-current-version">—</strong>
+          </div>
+          <p id="update-dev-notice" class="update-dev-notice hidden" data-i18n="updates.dev_mode">
+            In-app install is available in the packaged .exe. You can still check for new versions here.
+          </p>
+          <p id="update-status-msg" class="update-status-msg" aria-live="polite"></p>
+          <div id="update-progress-wrap" class="update-progress hidden" aria-hidden="true">
+            <div id="update-progress-bar" class="update-progress-bar"></div>
+          </div>
+          <div class="update-release-box hidden">
+            <strong data-i18n="updates.release_notes">Release notes</strong>
+            <pre id="update-release-notes"></pre>
+          </div>
+          <div class="update-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-check-updates" onclick="checkForUpdates()" data-i18n="updates.check">Check for updates</button>
+            <button type="button" class="btn btn-success btn-sm hidden" id="btn-update-now-settings" onclick="runUpdateNow()" data-i18n="updates.update_now">Update now</button>
+            <button type="button" class="btn btn-success btn-sm hidden" id="btn-download-update" onclick="downloadUpdate()" data-i18n="updates.download">Download update</button>
+            <button type="button" class="btn btn-success btn-sm hidden" id="btn-install-update" onclick="installUpdate()" data-i18n="updates.install">Install and restart</button>
+          </div>
+        </div>
+
         <div style="margin-top:12px;">
           <button class="btn btn-success" onclick="saveSettings()" data-i18n="button.save_settings">Save Settings</button>
           <span id="settings-saved-msg" class="hidden" style="margin-left:12px; color:var(--success); font-weight:600;">Saved!</span>
@@ -1320,6 +1525,52 @@
     <div class="flex gap-sm" style="justify-content:center;">
       <button class="btn btn-danger" id="btn-confirm-delete" data-i18n="button.delete">Delete</button>
       <button class="btn btn-ghost" onclick="closeModal('modal-confirm-delete')" data-i18n="button.cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Help Center -->
+<div class="modal-overlay hidden" id="modal-help-center">
+  <div class="modal-box help-center-box" role="dialog" aria-modal="true" aria-labelledby="help-center-title">
+    <button class="modal-close" onclick="closeHelpCenter()" aria-label="Close dialog">&times;</button>
+    <h3 id="help-center-title" data-i18n="help.center_title">Central de Ajuda</h3>
+    <p class="subtitle text-dim" data-i18n="help.center_subtitle">Perguntas frequentes, dicas e exemplos para usar o JobApply Assistant.</p>
+    <div class="help-center-toolbar">
+      <input type="search" class="form-control" id="help-search" data-i18n-placeholder="help.search_placeholder" placeholder="Buscar...">
+      <select class="form-control" id="help-category-filter" onchange="filterHelpCategory()" aria-label="Filter help topics">
+        <option value="all" data-i18n="help.category_all">Tudo</option>
+        <option value="start" data-i18n="help.category_start">Começar</option>
+        <option value="workflow" data-i18n="help.category_workflow">Guia</option>
+        <option value="apply" data-i18n="help.category_apply">Candidaturas</option>
+        <option value="settings" data-i18n="help.category_settings">Configurações</option>
+        <option value="languages" data-i18n="help.category_languages">Idiomas</option>
+        <option value="troubleshoot" data-i18n="help.category_troubleshoot">Problemas</option>
+      </select>
+      <button type="button" class="btn btn-primary btn-sm" onclick="startHelpTour(true)" data-i18n="help.start_tour">Iniciar tour guiado</button>
+    </div>
+    <div id="help-faq-list" class="help-faq-list" role="list"></div>
+  </div>
+</div>
+
+<!-- Guided Tour -->
+<div id="tour-overlay" class="tour-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="tour-title">
+  <div id="tour-spotlight" class="tour-spotlight" aria-hidden="true">
+    <div id="tour-backdrop" class="tour-backdrop"></div>
+  </div>
+  <div id="tour-popover" class="tour-popover">
+    <div class="tour-popover-header">
+      <span id="tour-step-num" class="tour-step-num">1 / 8</span>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="tourSkip()" data-i18n="help.tour_skip">Pular tour</button>
+    </div>
+    <h4 id="tour-title"></h4>
+    <p id="tour-body"></p>
+    <div class="tour-example-box">
+      <strong data-i18n="help.tour_example_label">Exemplo:</strong>
+      <p id="tour-example"></p>
+    </div>
+    <div class="tour-popover-actions">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="tourPrev()" data-i18n="help.tour_back">Voltar</button>
+      <button type="button" class="btn btn-primary btn-sm" id="tour-next-btn" onclick="tourNext()" data-i18n="help.tour_next">Próximo</button>
     </div>
   </div>
 </div>

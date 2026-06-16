@@ -98,10 +98,49 @@ class LinkedInApplier(BaseApplier):
 
     def _fill_form_fields(self, profile) -> None:
         """Fill common form fields if they are empty."""
+        from core.languages import format_languages_line
+
         self._safe_fill(
             "input[name*='phone'], input[id*='phone']",
             profile.phone_full,
         )
+        spoken = getattr(profile, "spoken_languages", None) or []
+        lang_line = format_languages_line(spoken, "pt")
+        screening = profile.screening_answers or {}
+        lang_answer = screening.get("languages") or lang_line
+        if lang_answer:
+            self._fill_by_keywords(
+                ["language", "languages", "idioma", "idiomas", "língua", "lengua"],
+                lang_answer,
+            )
+
+    def _fill_by_keywords(self, keywords: list[str], value: str) -> None:
+        """Fill visible inputs whose label/placeholder/aria-label matches keywords."""
+        if not value:
+            return
+        for el in self.page.query_selector_all("input, textarea, select"):
+            try:
+                if not el.is_visible():
+                    continue
+                attrs = " ".join(
+                    filter(None, [
+                        el.get_attribute("aria-label") or "",
+                        el.get_attribute("placeholder") or "",
+                        el.get_attribute("name") or "",
+                        el.get_attribute("id") or "",
+                    ])
+                ).lower()
+                if not any(kw in attrs for kw in keywords):
+                    continue
+                tag = el.evaluate("el => el.tagName.toLowerCase()")
+                if tag == "select":
+                    continue
+                current = el.input_value() if tag != "textarea" else el.input_value()
+                if not current:
+                    el.fill(value)
+                    self._random_pause(0.3, 0.6)
+            except Exception:
+                continue
 
     def _fill_cover_letter(self, text: str) -> None:
         """Fill cover letter textarea if visible."""

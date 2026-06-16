@@ -29,6 +29,8 @@ Thumbs.db
 browser_profile/
 profile/resumes/
 profile/cover_letters/
+JobApplyAssistant-*.zip
+JobApplyAssistant-Windows.zip
 
 # Environment / secrets
 .env

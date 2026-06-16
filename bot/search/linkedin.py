@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Iterator
 from urllib.parse import quote_plus
 
 from bot.search.base import BaseSearcher, RawJob
+from core.languages import expand_search_titles
 
 if TYPE_CHECKING:
     from config.settings import SearchCriteria
@@ -41,19 +42,21 @@ class LinkedInSearcher(BaseSearcher):
         found = 0
 
         for title in criteria.job_titles:
-            for location in criteria.locations:
-                if found >= max_results:
-                    return
+            search_titles = expand_search_titles(title, criteria.job_languages)
+            for search_title in search_titles:
+                for location in criteria.locations:
+                    if found >= max_results:
+                        return
 
-                try:
-                    yield from self._search_page(
-                        page, title, location, criteria, max_results - found
-                    )
-                except Exception as e:
-                    logger.error(
-                        "LinkedIn search failed for '%s' in '%s': %s",
-                        title, location, e,
-                    )
+                    try:
+                        yield from self._search_page(
+                            page, search_title, location, criteria, max_results - found
+                        )
+                    except Exception as e:
+                        logger.error(
+                            "LinkedIn search failed for '%s' in '%s': %s",
+                            search_title, location, e,
+                        )
 
     def _search_page(
         self, page, title: str, location: str, criteria, remaining: int

@@ -1,0 +1,33 @@
+JobApply Assistant — Guia rápido (Windows)
+==========================================
+
+DOWNLOAD
+--------
+Baixe a versão mais recente em:
+https://github.com/Krassusky/gui-job-aplication1/releases/latest
+
+Escolha o arquivo: JobApplyAssistant-X.Y.Z-win-x64.zip
+
+INSTALAÇÃO
+----------
+1. Extraia o .zip em uma pasta (ex.: C:\JobApplyAssistant)
+2. Abra a pasta e execute JobApplyAssistant.exe
+3. Se o Windows SmartScreen avisar: "Mais informações" → "Executar assim mesmo"
+4. Instale o Google Chrome (obrigatório) se ainda não tiver
+
+PRIMEIRO USO
+------------
+1. Siga o assistente de configuração (perfil, currículo PDF, LinkedIn)
+2. Use a aba "Guia" para os passos na ordem
+3. No Painel, clique Iniciar e revise cada vaga antes de candidatar
+
+ATUALIZAR
+---------
+Opção A — Dentro do app: Configurações → Atualizações → Atualizar agora
+Opção B — Baixe a nova versão no GitHub (link acima) e substitua a pasta
+
+Seus dados ficam em: C:\Users\SEU_NOME\.autoapply\
+
+SUPORTE
+-------
+Repositório: https://github.com/Krassusky/gui-job-aplication1

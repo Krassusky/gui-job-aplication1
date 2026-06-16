@@ -5,6 +5,7 @@ import { state } from './state.js';
 import { setTags } from './tag-input.js';
 import { checkLoginSessions } from './login.js';
 import { t, getLocale, setLocale } from './i18n.js';
+import { refreshHelp } from './help.js';
 import { updateAIIndicators } from './ai-status.js';
 
 const LLM_DEFAULT_MODELS = {
@@ -47,6 +48,8 @@ export async function loadSettings() {
     document.getElementById('set-bio').value        = p.bio || '';
     document.getElementById('set-linkedin').value   = p.linkedin_url || '';
     document.getElementById('set-portfolio').value  = p.portfolio_url || '';
+    _loadSpokenLanguages(p.spoken_languages);
+    _loadJobLanguages((cfg.search_criteria || {}).job_languages);
 
     // Screening answers
     const sa = p.screening_answers || {};
@@ -120,6 +123,7 @@ export async function onLocaleChange() {
   const sel = document.getElementById('set-locale');
   if (!sel) return;
   await setLocale(sel.value);
+  refreshHelp();
 }
 
 function _collectScreeningAnswers() {
@@ -140,7 +144,61 @@ function _collectScreeningAnswers() {
     const val = document.getElementById(id).value;
     if (val) ans[key] = val;
   }
+  const langLine = _formatLanguagesLine(_collectSpokenLanguages());
+  if (langLine) ans.languages = langLine;
   return ans;
+}
+
+const SPOKEN_LANG_IDS = [
+  { code: 'pt', check: 'set-spoken-pt', level: 'set-level-pt' },
+  { code: 'en', check: 'set-spoken-en', level: 'set-level-en' },
+  { code: 'es', check: 'set-spoken-es', level: 'set-level-es' },
+];
+
+function _collectSpokenLanguages() {
+  const out = [];
+  for (const { code, check, level } of SPOKEN_LANG_IDS) {
+    const cb = document.getElementById(check);
+    if (cb && cb.checked) {
+      out.push({ code, level: document.getElementById(level)?.value || 'fluent' });
+    }
+  }
+  return out;
+}
+
+function _collectJobLanguages() {
+  return [...document.querySelectorAll('.set-job-lang:checked')].map(c => c.value);
+}
+
+function _loadSpokenLanguages(spoken) {
+  const map = {};
+  for (const entry of spoken || []) map[entry.code] = entry.level || 'fluent';
+  for (const { code, check, level } of SPOKEN_LANG_IDS) {
+    const cb = document.getElementById(check);
+    const sel = document.getElementById(level);
+    if (!cb || !sel) continue;
+    if (map[code]) {
+      cb.checked = true;
+      sel.value = map[code];
+    } else {
+      cb.checked = false;
+    }
+  }
+}
+
+function _loadJobLanguages(codes) {
+  const set = new Set(codes || ['pt', 'en', 'es']);
+  document.querySelectorAll('.set-job-lang').forEach(cb => {
+    cb.checked = set.has(cb.value);
+  });
+}
+
+function _formatLanguagesLine(spoken) {
+  const names = { pt: 'Português', en: 'English', es: 'Español' };
+  const levels = {
+    native: 'Native', fluent: 'Fluent', intermediate: 'Intermediate', basic: 'Basic',
+  };
+  return spoken.map(s => `${names[s.code] || s.code} (${levels[s.level] || s.level})`).join(', ');
 }
 
 export async function saveSettings() {
@@ -160,6 +218,7 @@ export async function saveSettings() {
       bio:                document.getElementById('set-bio').value,
       linkedin_url:       document.getElementById('set-linkedin').value,
       portfolio_url:      document.getElementById('set-portfolio').value,
+      spoken_languages:   _collectSpokenLanguages(),
       screening_answers:  _collectScreeningAnswers(),
     },
     llm: {
@@ -175,6 +234,7 @@ export async function saveSettings() {
       keywords_include:  state.tagInputs['set-include-tags'] || [],
       keywords_exclude:  state.tagInputs['set-exclude-tags'] || [],
       experience_levels: [...document.querySelectorAll('.set-exp-level:checked')].map(c => c.value),
+      job_languages:     _collectJobLanguages(),
     },
   };
 

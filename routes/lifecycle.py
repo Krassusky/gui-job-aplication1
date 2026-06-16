@@ -24,7 +24,9 @@ def index():
 
 @lifecycle_bp.route("/api/health", methods=["GET"])
 def health_check():
-    return jsonify({"status": "ok"})
+    from core.version_info import get_app_version
+
+    return jsonify({"status": "ok", "version": get_app_version()})
 
 
 @lifecycle_bp.route("/api/locales", methods=["GET"])

@@ -62,6 +62,9 @@ Output format — Markdown only, no preamble, no explanation:
 ## Skills
 Comma-separated, relevant skills only.
 
+## Languages
+{languages_section}
+
 ## Education
 [Degree] — [Institution] ([Year])
 
@@ -83,6 +86,7 @@ Phone: {phone}
 Location: {location}
 LinkedIn: {linkedin_url}
 Portfolio: {portfolio_url}
+Languages: {languages_line}
 """
 
 KB_RESUME_PROMPT = """
@@ -157,6 +161,7 @@ Instructions:
 - Do NOT use filler phrases like "I am excited to apply" or "I am a perfect fit"
 - Do NOT repeat the resume — add context and personality
 - Match tone to the company culture inferred from the job description
+- {language_instruction}
 - Output ONLY the cover letter body — no date, no address, no salutation header, no sign-off
 
 ---
@@ -448,7 +453,15 @@ def generate_documents(
     """
     from core.resume_renderer import render_resume_to_pdf
 
+    from core.languages import format_languages_line
+
     experience_content = read_all_experience_files(experience_dir)
+    languages_line = format_languages_line(getattr(profile, "spoken_languages", None), "pt")
+    languages_section = (
+        languages_line
+        if languages_line
+        else "List only languages evidenced in experience files."
+    )
 
     safe_company = job.raw.company.replace(" ", "-").lower()
     date_str = datetime.now().strftime("%Y-%m-%d")
@@ -472,6 +485,8 @@ def generate_documents(
         location=profile.location,
         linkedin_url=profile.linkedin_url or "N/A",
         portfolio_url=profile.portfolio_url or "N/A",
+        languages_line=languages_line or "N/A",
+        languages_section=languages_section,
     ), llm_config)
 
     # Save resume Markdown + PDF
@@ -483,11 +498,17 @@ def generate_documents(
     # Generate and save cover letter (unless disabled)
     cl_path = None
     if not skip_cover_letter:
+        from core.languages import detect_response_language
+
+        language_instruction = detect_response_language(
+            job.raw.description, getattr(profile, "spoken_languages", None)
+        )
         cover_letter_text = invoke_llm(COVER_LETTER_PROMPT.format(
             experience_files_content=experience_content,
             job_description=job.raw.description,
             full_name=profile.full_name,
             bio=profile.bio,
+            language_instruction=language_instruction,
         ), llm_config)
         cl_path = output_dir_cover_letters / f"{base_name}.txt"
         cl_path.write_text(cover_letter_text, encoding="utf-8")
