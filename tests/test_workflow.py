@@ -4,7 +4,6 @@ from config.settings import BotConfig
 from core.career_workflow import (
     WORKFLOW_STEPS,
     get_manual_prompts,
-    load_workflow_state,
     mark_step_complete,
 )
 

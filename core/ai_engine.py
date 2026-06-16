@@ -451,9 +451,8 @@ def generate_documents(
     Raises:
         RuntimeError: If LLM invocation fails.
     """
-    from core.resume_renderer import render_resume_to_pdf
-
     from core.languages import format_languages_line
+    from core.resume_renderer import render_resume_to_pdf
 
     experience_content = read_all_experience_files(experience_dir)
     languages_line = format_languages_line(getattr(profile, "spoken_languages", None), "pt")

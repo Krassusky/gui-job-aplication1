@@ -8,7 +8,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from config.settings import AppConfig, get_data_dir, load_config, save_config
+from config.settings import AppConfig, get_data_dir, save_config
 from core.ai_engine import invoke_llm, read_all_experience_files
 from core.document_parser import extract_text
 
