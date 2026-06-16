@@ -4,6 +4,11 @@ on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (must match an existing tag, e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
 
 permissions:
   contents: write
@@ -85,9 +90,20 @@ jobs:
       - name: List artifacts
         run: find artifacts -type f | head -20
 
-      - name: Create GitHub Release
+      - name: Resolve release tag
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           files: |
             artifacts/installer-windows/*
             artifacts/installer-macos/*
@@ -95,3 +111,4 @@ jobs:
           body_path: .github/release-notes-template.md
           generate_release_notes: true
           make_latest: true
+          fail_on_unmatched_files: false
