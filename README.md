@@ -42,61 +42,74 @@ Node.js is **not** required — upstream migrated from Electron to PyWebView + P
 
 ```powershell
 cd c:\repositories-02\gui-job-aplication
-python -m venv venv
+py -m venv venv
 .\venv\Scripts\activate
-python setup_env.py
+py setup_env.py
 playwright install chromium
-python run.py --gui
+py run.py --gui
 ```
 
-A desktop window opens with the dashboard.
+Or double-click `start.bat` after setup.
 
 ### Run tests
 
 ```powershell
-python -m pytest tests/test_settings.py -v
+.\venv\Scripts\python.exe -m pytest tests/test_settings.py -v
 ```
 
 ### Build Windows executable for your friend
 
 ```powershell
-.\venv\Scripts\activate
-pip install pyinstaller
-pyinstaller autoapply.spec
+.\venv\Scripts\pip install pyinstaller
+.\venv\Scripts\pyinstaller autoapply.spec
 ```
 
-Output: `dist\AutoApply\AutoApply.exe` — zip that folder and send it to him, or rename to `JobApplyAssistant.exe`.
+Output: `dist\JobApplyAssistant\JobApplyAssistant.exe` — zip that folder and send it to him.
 
 **Note:** Windows SmartScreen may warn on unsigned builds → **More info → Run anyway**.
 
 ---
 
-## Create your GitHub fork
+## GitHub repo
 
-The GitHub CLI (`gh`) is not installed on this machine, so the fork must be created on GitHub:
+**Fork:** https://github.com/Krassusky/gui-job-aplication1  
+**Remote:** `git@github.com:Krassusky/gui-job-aplication1.git`  
+**Branch:** `master`
 
-1. Go to https://github.com/AbhishekMandapmalvi/AutoApply
-2. Click **Fork** → create under your account
-3. Then connect this local repo:
+Customizations are committed locally. Push once SSH is configured:
 
 ```powershell
-git remote add origin https://github.com/YOUR_USERNAME/gui-job-aplication.git
-git add -A
-git commit -m "Fork AutoApply with review-mode defaults for LinkedIn assistant"
-git push -u origin main
+git push -u origin master
 ```
 
-To pull upstream updates later:
+### Fix SSH push (one-time)
+
+If you see `Permission denied (publickey)`, add your SSH key to GitHub:
+
+1. Copy your public key:
 
 ```powershell
-git remote add upstream https://github.com/AbhishekMandapmalvi/AutoApply.git
+Get-Content $env:USERPROFILE\.ssh\id_ed25519.pub | Set-Clipboard
+```
+
+2. Open https://github.com/settings/keys → **New SSH key** → paste → save
+3. Test and push:
+
+```powershell
+ssh -T git@github.com
+git push -u origin master
+```
+
+### Pull upstream AutoApply updates later
+
+```powershell
 git fetch upstream
 git merge upstream/master
 ```
 
 ---
 
-## Architecture
+## Developer setup
 
 ```
 Desktop window (PyWebView)
