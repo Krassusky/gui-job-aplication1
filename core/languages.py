@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-LANGUAGE_META: dict[str, dict[str, str | list[str]]] = {
+from typing import Any
+
+LANGUAGE_META: dict[str, Any] = {
     "pt": {
         "name_en": "Portuguese",
         "name_pt": "Português",
@@ -64,15 +66,15 @@ def language_display_name(code: str, locale: str = "en") -> str:
 
 def level_display_name(code: str, level: str, locale: str = "en") -> str:
     meta = LANGUAGE_META.get(code, {})
-    levels = meta.get("levels", {})
+    levels: Any = meta.get("levels", {})
     if isinstance(levels, dict) and level in levels:
         level_map = levels[level]
         if isinstance(level_map, dict):
             if locale.startswith("pt"):
-                return level_map.get("pt", level)
+                return str(level_map.get("pt", level))
             if locale.startswith("es"):
-                return level_map.get("es", level)
-            return level_map.get("en", level)
+                return str(level_map.get("es", level))
+            return str(level_map.get("en", level))
     return level
 
 
@@ -148,8 +150,9 @@ def resolve_document_locale(job_languages: list[str] | None, spoken_languages: l
         return job_languages[0]
     if spoken_languages:
         for entry in spoken_languages:
-            if entry.get("level") == "native" and entry.get("code"):
-                return entry["code"]
+            code = entry.get("code")
+            if entry.get("level") == "native" and code:
+                return str(code)
     return "en"
 
 
@@ -158,11 +161,11 @@ def detect_response_language(
     spoken_languages: list[dict[str, str]] | None,
 ) -> str:
     """Tell the LLM which language to use for cover letters."""
-    codes = [e.get("code") for e in (spoken_languages or []) if e.get("code")]
+    codes = [str(e.get("code")) for e in (spoken_languages or []) if e.get("code")]
     if not codes:
         codes = ["pt", "en", "es"]
     scores = {code: score_language_match(job_description, [code]) for code in codes}
-    best = max(scores, key=scores.get)
+    best = max(scores, key=lambda c: scores[c])
     if scores[best] > 0:
         name = language_display_name(best, best)
         return f"Write the cover letter in {name}."

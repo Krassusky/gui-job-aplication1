@@ -6,7 +6,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from config.settings import AppConfig, get_data_dir, save_config
 from core.ai_engine import invoke_llm, read_all_experience_files
@@ -102,7 +102,7 @@ def load_workflow_state() -> dict[str, Any]:
         data.setdefault("current_step", 1)
         data.setdefault("completed_steps", [])
         data.setdefault("analyses", {})
-        return data
+        return cast(dict[str, Any], data)
     except Exception as e:
         logger.warning("Could not load workflow state: %s", e)
         return {"current_step": 1, "completed_steps": [], "analyses": {}}
@@ -235,7 +235,7 @@ def _parse_json_block(text: str) -> dict[str, Any] | None:
     if not match:
         return None
     try:
-        return json.loads(match.group())
+        return cast(dict[str, Any] | None, json.loads(match.group()))
     except json.JSONDecodeError:
         return None
 

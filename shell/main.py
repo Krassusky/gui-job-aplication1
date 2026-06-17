@@ -183,6 +183,9 @@ def launch_gui(host: str = "127.0.0.1", port: int = 5000) -> None:
         height=800,
         min_size=(800, 600),
     )
+    if window is None:
+        logger.error("Failed to create application window")
+        sys.exit(1)
 
     # Track app quit state (window close and tray Quit both set this)
     _app_state: dict[str, Any] = {"quitting": False}

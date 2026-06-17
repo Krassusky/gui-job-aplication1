@@ -10,7 +10,7 @@ import sys
 import threading
 import zipfile
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import requests
 
@@ -204,7 +204,7 @@ def _fetch_latest_release() -> dict[str, Any]:
     if resp.status_code != 200:
         raise UpdateError(f"GitHub returned status {resp.status_code}.")
 
-    return resp.json()
+    return cast(dict[str, Any], resp.json())
 
 
 def _pick_release_asset(assets: list[dict[str, Any]]) -> dict[str, Any] | None:
