@@ -15,12 +15,14 @@ from typing import Any, cast
 import requests
 
 from config.settings import get_data_dir
+from core.platform_info import get_app_binary_name, get_platform_asset_suffix
 from core.version_info import get_app_version, is_newer_version, normalize_tag
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_GITHUB_REPO = "Krassusky/gui-job-aplication1"
 GITHUB_API = "https://api.github.com"
+# Kept for tests that build Windows-style update packages.
 EXE_NAME = "JobApplyAssistant.exe"
 
 _lock = threading.Lock()
@@ -54,14 +56,6 @@ def _set_state(**kwargs: Any) -> None:
 
 def get_github_repo() -> str:
     return os.environ.get("AUTOAPPLY_UPDATE_REPO", DEFAULT_GITHUB_REPO).strip()
-
-
-def get_platform_asset_suffix() -> str:
-    if sys.platform == "win32":
-        return "win-x64"
-    if sys.platform == "darwin":
-        return "mac-x64"
-    return "linux-x64"
 
 
 def get_install_dir() -> Path | None:
@@ -148,7 +142,7 @@ def apply_update_and_restart() -> None:
         raise UpdateError("Download the update before installing.")
 
     source_dir = _find_package_root(extract_dir)
-    if not (source_dir / EXE_NAME).is_file():
+    if not _package_has_binary(source_dir):
         raise UpdateError("Update package is missing the application executable.")
 
     if sys.platform != "win32":
@@ -272,22 +266,49 @@ def _extract_zip(zip_path: Path, extract_dir: Path) -> None:
         zf.extractall(extract_dir)
 
 
+def _package_has_binary(root: Path) -> bool:
+    for name in _binary_names():
+        if (root / name).is_file():
+            return True
+    app_binary = root / "JobApplyAssistant.app" / "Contents" / "MacOS" / get_app_binary_name()
+    return app_binary.is_file()
+
+
+def _binary_names() -> list[str]:
+    names = [get_app_binary_name(), EXE_NAME, "JobApplyAssistant"]
+    return list(dict.fromkeys(names))
+
+
 def _find_package_root(extract_dir: Path) -> Path:
     if not extract_dir.is_dir():
         raise UpdateError("Update files not found.")
-    if (extract_dir / EXE_NAME).is_file():
-        return extract_dir
+
+    app_bundle = extract_dir / "JobApplyAssistant.app"
+    if app_bundle.is_dir():
+        return app_bundle
+
     for child in extract_dir.iterdir():
-        if child.is_dir() and (child / EXE_NAME).is_file():
+        if child.is_dir() and child.name.endswith(".app"):
             return child
-    for exe in extract_dir.rglob(EXE_NAME):
-        return exe.parent
-    raise UpdateError("Could not find JobApplyAssistant.exe in the update package.")
+
+    for name in _binary_names():
+        if (extract_dir / name).is_file():
+            return extract_dir
+
+    for child in extract_dir.iterdir():
+        if child.is_dir() and _package_has_binary(child):
+            return child
+
+    for name in _binary_names():
+        for match in extract_dir.rglob(name):
+            return match.parent
+
+    raise UpdateError("Could not find the application executable in the update package.")
 
 
 def _write_windows_updater(install_dir: Path, source_dir: Path) -> Path:
     bat_path = _updates_dir() / "apply_update.bat"
-    exe_path = install_dir / EXE_NAME
+    exe_path = install_dir / get_app_binary_name()
     content = f"""@echo off
 setlocal EnableExtensions
 echo Updating JobApply Assistant...

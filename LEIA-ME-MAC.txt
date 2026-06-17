@@ -1,0 +1,38 @@
+JobApply Assistant — Guia rápido (macOS)
+========================================
+
+DOWNLOAD
+--------
+Baixe a versão mais recente em:
+https://github.com/Krassusky/gui-job-aplication1/releases/latest
+
+No Mac com chip Apple (M1/M2/M3/M4):
+  JobApplyAssistant-X.Y.Z-mac-arm64.zip
+
+No Mac Intel mais antigo:
+  JobApplyAssistant-X.Y.Z-mac-x64.zip
+
+INSTALAÇÃO
+----------
+1. Extraia o .zip (duplo clique)
+2. Arraste JobApplyAssistant.app para a pasta Aplicativos
+3. Na primeira vez: clique com o botão direito → Abrir → Abrir
+   (macOS bloqueia apps não assinados por segurança)
+4. Instale o Google Chrome (obrigatório) se ainda não tiver
+
+PRIMEIRO USO
+------------
+1. Siga o assistente de configuração (perfil, currículo PDF, LinkedIn)
+2. Use a aba "Guia" para os passos na ordem
+3. No Painel, clique Iniciar e revise cada vaga antes de candidatar
+
+ATUALIZAR
+---------
+Baixe a nova versão no GitHub (link acima) e substitua o JobApplyAssistant.app
+na pasta Aplicativos.
+
+Seus dados ficam em: /Users/SEU_NOME/.autoapply/
+
+SUPORTE
+-------
+Repositório: https://github.com/Krassusky/gui-job-aplication1

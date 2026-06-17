@@ -13,7 +13,7 @@ A customized fork of [AutoApply](https://github.com/AbhishekMandapmalvi/AutoAppl
 | Platforms | LinkedIn + Indeed | **LinkedIn only** |
 | Delay between applies | 45s | **60s** |
 
-No Docker required. Everything runs locally on Windows.
+No Docker required. Runs locally on **Windows** and **macOS**.
 
 **Download (latest release):** https://github.com/Krassusky/gui-job-aplication1/releases/latest
 
@@ -21,16 +21,27 @@ No Docker required. Everything runs locally on Windows.
 
 ## For your friend (end user)
 
-### Download from GitHub
+### Windows
 
 1. Open **https://github.com/Krassusky/gui-job-aplication1/releases/latest**
-2. Download **`JobApplyAssistant-X.Y.Z-win-x64.zip`** (Assets section)
+2. Download **`JobApplyAssistant-X.Y.Z-win-x64.zip`**
 3. Extract the zip to a folder (e.g. `C:\JobApplyAssistant`)
 4. Run **`JobApplyAssistant.exe`**
 5. Install **Google Chrome** if prompted
 6. If Windows SmartScreen warns → **More info → Run anyway**
 
-See also **`LEIA-ME.txt`** inside the zip (Portuguese quick start).
+See **`LEIA-ME.txt`** inside the zip (Portuguese quick start).
+
+### macOS (MacBook)
+
+1. Open **https://github.com/Krassusky/gui-job-aplication1/releases/latest**
+2. Download **`JobApplyAssistant-X.Y.Z-mac-arm64.zip`** (Apple Silicon M1/M2/M3/M4)  
+   or **`mac-x64.zip`** on an older Intel Mac
+3. Extract the zip and drag **`JobApplyAssistant.app`** to **Applications**
+4. First launch: **right-click → Open → Open** (macOS blocks unsigned apps)
+5. Install **Google Chrome** if prompted
+
+See **`LEIA-ME-MAC.txt`** inside the app (Portuguese quick start).
 
 ### Daily use
 
@@ -42,10 +53,11 @@ See also **`LEIA-ME.txt`** inside the zip (Portuguese quick start).
 
 ### Updates
 
-- **In the app:** Configurações → Atualizações → **Atualizar agora** (banner appears when a new version exists)
-- **Manual:** download the new zip from GitHub Releases and replace the folder
+- **Windows — in the app:** Configurações → Atualizações → **Atualizar agora**
+- **macOS — manual:** download the new zip from GitHub Releases and replace `JobApplyAssistant.app`
+- **Manual (all platforms):** download the new zip and replace the install folder/app
 
-Data is stored at `C:\Users\<name>\.autoapply\` and is kept across updates.
+Data is stored at `~/.autoapply/` (macOS/Linux) or `C:\Users\<name>\.autoapply\` (Windows).
 
 ---
 
@@ -105,10 +117,12 @@ git tag v1.0.1
 git push origin v1.0.1
 ```
 
-4. GitHub Actions builds `JobApplyAssistant-x.y.z-win-x64.zip` and publishes it on **Releases**
-5. Your friend gets a banner in the app, or downloads from **https://github.com/Krassusky/gui-job-aplication1/releases/latest**
+4. GitHub Actions builds Windows, macOS, and Linux zips and publishes them on **Releases**
+5. Your friend downloads from **https://github.com/Krassusky/gui-job-aplication1/releases/latest**
 
-Data in `C:\Users\<name>\.autoapply\` is kept across updates.
+### Code signing (optional)
+
+Unsigned builds work but show security warnings. See **[docs/CODE_SIGNING.md](docs/CODE_SIGNING.md)** for Apple notarization (~$99/year) and Windows Authenticode (~$200+/year).
 
 ### Publish checklist
 

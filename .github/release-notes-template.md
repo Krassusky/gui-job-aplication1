@@ -2,9 +2,10 @@
 
 | Platform | File |
 |----------|------|
-| **Windows** (recommended) | `JobApplyAssistant-*-win-x64.zip` |
-| macOS | `JobApplyAssistant-*-mac-x64.zip` |
-| Linux | `JobApplyAssistant-*-linux-x64.zip` |
+| **Windows** | `JobApplyAssistant-*-win-x64.zip` |
+| **macOS (Apple Silicon M1/M2/M3/M4)** | `JobApplyAssistant-*-mac-arm64.zip` |
+| **macOS (Intel)** | `JobApplyAssistant-*-mac-x64.zip` |
+| **Linux** | `JobApplyAssistant-*-linux-x64.zip` |
 
 ### Windows install
 
@@ -14,11 +15,22 @@
 4. Install **Google Chrome** if you don't have it
 5. If SmartScreen warns: **More info → Run anyway**
 
+### macOS install
+
+1. Download **`JobApplyAssistant-*-mac-arm64.zip`** (most MacBooks) or **`mac-x64`** (older Intel Mac)
+2. Extract the zip and drag **`JobApplyAssistant.app`** to **Applications**
+3. First launch: **right-click → Open → Open** (unsigned builds)
+4. Install **Google Chrome** if you don't have it
+
+See **`LEIA-ME-MAC.txt`** inside the app for Portuguese instructions.
+
 ### In-app updates
 
-After the first install, open **Settings → Updates → Update now** when a new version is available.
+**Windows only:** Settings → Updates → Update now.
 
-User data is stored in `%USERPROFILE%\.autoapply\` and is kept across updates.
+**macOS:** download the new zip from GitHub and replace the app in Applications.
+
+User data is stored in `~/.autoapply/` (macOS/Linux) or `%USERPROFILE%\.autoapply\` (Windows).
 
 ---
 

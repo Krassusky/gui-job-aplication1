@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag (must match an existing tag, e.g. v1.0.0)'
+        description: 'Release tag (must match an existing tag, e.g. v1.0.1)'
         required: true
-        default: 'v1.0.0'
+        default: 'v1.0.1'
 
 permissions:
   contents: write
@@ -43,7 +43,29 @@ jobs:
           python -m pip install --upgrade pip
           pip install .[dev]
 
+      - name: Import macOS signing certificate
+        if: runner.os == 'macOS'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ -z "${APPLE_CERTIFICATE:-}" ]; then
+            echo "No APPLE_CERTIFICATE secret — skipping code signing setup."
+            exit 0
+          fi
+          KEYCHAIN=build.keychain
+          security create-keychain -p "$APPLE_CERTIFICATE_PASSWORD" "$KEYCHAIN"
+          security default-keychain -s "$KEYCHAIN"
+          security unlock-keychain -p "$APPLE_CERTIFICATE_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -t 3600 -u "$KEYCHAIN"
+          echo "$APPLE_CERTIFICATE" | base64 --decode > certificate.p12
+          security import certificate.p12 -k "$KEYCHAIN" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$APPLE_CERTIFICATE_PASSWORD" "$KEYCHAIN"
+          rm -f certificate.p12
+
       - name: Build with PyInstaller
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
         run: |
           pip install pyinstaller
           pyinstaller autoapply.spec
@@ -51,22 +73,14 @@ jobs:
 
       - name: Package distribution
         shell: bash
-        run: |
-          cd dist
-          VERSION=$(python -c "import tomllib; print(tomllib.load(open('../pyproject.toml','rb'))['project']['version'])")
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            PLATFORM="win-x64"
-            cp ../LEIA-ME.txt JobApplyAssistant/LEIA-ME.txt
-            7z a "JobApplyAssistant-${VERSION}-${PLATFORM}.zip" JobApplyAssistant/
-          elif [ "$RUNNER_OS" = "macOS" ]; then
-            PLATFORM="mac-x64"
-            cp ../LEIA-ME.txt JobApplyAssistant/LEIA-ME.txt
-            zip -r "JobApplyAssistant-${VERSION}-${PLATFORM}.zip" JobApplyAssistant/
-          else
-            PLATFORM="linux-x64"
-            cp ../LEIA-ME.txt JobApplyAssistant/LEIA-ME.txt
-            zip -r "JobApplyAssistant-${VERSION}-${PLATFORM}.zip" JobApplyAssistant/
-          fi
+        env:
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        run: bash scripts/ci_package.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7

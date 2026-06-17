@@ -36,7 +36,7 @@ class TestVersionInfo:
 
     def test_get_app_version_reads_pyproject(self):
         get_app_version.cache_clear()
-        assert get_app_version() == "1.0.0"
+        assert get_app_version() == "1.0.1"
 
 
 class TestUpdater:
@@ -72,11 +72,26 @@ class TestUpdater:
         assert result["latest_version"] == "1.1.0"
         assert "Bug fixes" in result["release_notes"]
 
+    def test_pick_release_asset_prefers_mac_arm64(self):
+        assets = [
+            {"name": "JobApplyAssistant-1.0.0-mac-x64.zip", "size": 1},
+            {"name": "JobApplyAssistant-1.0.0-mac-arm64.zip", "size": 2},
+        ]
+        with patch.object(updater, "get_platform_asset_suffix", return_value="mac-arm64"):
+            picked = updater._pick_release_asset(assets)
+        assert picked["name"].endswith("mac-arm64.zip")
+
     def test_find_package_root(self, tmp_path):
         root = tmp_path / "JobApplyAssistant"
         root.mkdir()
         (root / updater.EXE_NAME).write_text("exe", encoding="utf-8")
         assert updater._find_package_root(tmp_path) == root
+
+    def test_find_mac_app_bundle_root(self, tmp_path):
+        app = tmp_path / "JobApplyAssistant.app" / "Contents" / "MacOS"
+        app.mkdir(parents=True)
+        (app / "JobApplyAssistant").write_text("bin", encoding="utf-8")
+        assert updater._find_package_root(tmp_path).name == "JobApplyAssistant.app"
 
     def test_extract_and_find(self, tmp_path, monkeypatch):
         zip_path = tmp_path / "app.zip"
