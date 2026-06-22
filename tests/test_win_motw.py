@@ -5,8 +5,6 @@ from __future__ import annotations
 import sys
 from unittest.mock import patch
 
-import pytest
-
 from shell.win_motw import _should_unblock_dll, strip_download_zone_identifiers
 
 
