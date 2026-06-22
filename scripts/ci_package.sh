@@ -47,8 +47,10 @@ notarize_macos_zip() {
 if [[ "${RUNNER_OS:-}" == "Windows" || "$(uname -s 2>/dev/null || echo Windows)" == *MINGW* ]]; then
   PLATFORM="win-x64"
   cp ../LEIA-ME.txt JobApplyAssistant/LEIA-ME.txt
+  cp ../COMECE-AQUI.txt JobApplyAssistant/COMECE-AQUI.txt
   cp ../scripts/install_shortcuts_win.bat "JobApplyAssistant/Install JobApply Assistant.bat"
   cp ../scripts/install_shortcuts_win.ps1 JobApplyAssistant/install_shortcuts_win.ps1
+  cp ../scripts/unblock_win.bat "JobApplyAssistant/Desbloquear arquivos.bat"
   sign_windows_binary "JobApplyAssistant/JobApplyAssistant.exe"
   7z a "JobApplyAssistant-${VERSION}-${PLATFORM}.zip" JobApplyAssistant/
 
@@ -60,14 +62,20 @@ elif [[ "${RUNNER_OS:-}" == "macOS" || "$(uname -s)" == "Darwin" ]]; then
     PLATFORM="mac-x64"
   fi
   cp ../scripts/install_shortcuts_mac.command "Install JobApply Assistant.command"
-  chmod +x "Install JobApply Assistant.command"
+  cp ../scripts/unblock_mac.command "Desbloquear arquivos.command"
+  cp ../COMECE-AQUI-MAC.txt "COMECE-AQUI.txt"
+  cp ../LEIA-ME-MAC.txt LEIA-ME-MAC.txt
+  chmod +x "Install JobApply Assistant.command" "Desbloquear arquivos.command"
   mkdir -p JobApplyAssistant.app/Contents/Resources
   cp ../LEIA-ME-MAC.txt JobApplyAssistant.app/Contents/Resources/LEIA-ME-MAC.txt
   chmod +x JobApplyAssistant.app/Contents/MacOS/JobApplyAssistant
   sign_macos_bundle "JobApplyAssistant.app"
   ditto -c -k --keepParent "JobApplyAssistant.app" "JobApplyAssistant-${VERSION}-${PLATFORM}.zip"
-  # Add install helper alongside the app in the zip root
-  zip "JobApplyAssistant-${VERSION}-${PLATFORM}.zip" "Install JobApply Assistant.command"
+  zip "JobApplyAssistant-${VERSION}-${PLATFORM}.zip" \
+    "Install JobApply Assistant.command" \
+    "Desbloquear arquivos.command" \
+    "COMECE-AQUI.txt" \
+    "LEIA-ME-MAC.txt"
   notarize_macos_zip "JobApplyAssistant-${VERSION}-${PLATFORM}.zip"
 
 else

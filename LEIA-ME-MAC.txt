@@ -12,15 +12,18 @@ No Mac com chip Apple (M1/M2/M3/M4):
 No Mac Intel mais antigo:
   JobApplyAssistant-X.Y.Z-mac-x64.zip
 
-INSTALAÇÃO
-----------
+INSTALAÇÃO (3 passos)
+---------------------
 1. Extraia o .zip (duplo clique)
-2. Dê duplo clique em Install JobApply Assistant.command para copiar para Aplicativos
-   e criar um atalho na Área de Trabalho
-   (ou arraste JobApplyAssistant.app para a pasta Aplicativos manualmente)
-3. Na primeira vez: clique com o botão direito → Abrir → Abrir
-   (macOS bloqueia apps não assinados por segurança)
-4. Instale o Google Chrome (obrigatório) se ainda não tiver
+2. Dê duplo clique em Desbloquear arquivos.command
+   (remove o bloqueio de segurança do download)
+3. Dê duplo clique em Install JobApply Assistant.command
+   (copia para Aplicativos e cria atalho na Área de Trabalho)
+
+Se o Mac ainda bloquear na primeira abertura:
+   Botão direito em JobApplyAssistant.app → Abrir → Abrir
+
+Instale o Google Chrome (obrigatório) se ainda não tiver.
 
 PRIMEIRO USO
 ------------

@@ -1,0 +1,25 @@
+Job Apply Assistant — COMECE AQUI (Windows)
+============================================
+
+Siga estes 3 passos na ordem:
+
+1) DESBLOQUEAR O ZIP
+   - Clique com o botão direito no arquivo .zip baixado
+   - Propriedades → marque "Desbloquear" → OK
+   - Extraia o .zip em uma pasta simples (ex.: C:\JobApplyAssistant)
+
+2) DESBLOQUEAR OS ARQUIVOS
+   - Abra a pasta JobApplyAssistant
+   - Dê duplo clique em: Desbloquear arquivos.bat
+
+3) INSTALAR ATALHOS (recomendado)
+   - Dê duplo clique em: Install JobApply Assistant.bat
+   - Ou execute JobApplyAssistant.exe diretamente
+
+Se o Windows avisar sobre segurança:
+   "Mais informações" → "Executar assim mesmo"
+
+Precisa do Google Chrome instalado.
+
+Download atualizado:
+https://github.com/Krassusky/gui-job-aplication1/releases/latest

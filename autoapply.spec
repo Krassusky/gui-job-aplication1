@@ -82,6 +82,7 @@ a = Analysis(
         "shell.tray",
         "shell.single_instance",
         "shell.win_motw",
+        "shell.mac_quarantine",
     ],
     hookspath=[],
     hooksconfig={},

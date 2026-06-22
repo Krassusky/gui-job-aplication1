@@ -1,0 +1,24 @@
+Job Apply Assistant — COMECE AQUI (macOS)
+==========================================
+
+Siga estes 3 passos na ordem:
+
+1) EXTRAIR
+   - Dê duplo clique no arquivo .zip baixado
+
+2) DESBLOQUEAR (importante na primeira vez)
+   - Dê duplo clique em: Desbloquear arquivos.command
+   - Se o Mac perguntar, confirme que deseja abrir
+
+3) INSTALAR
+   - Dê duplo clique em: Install JobApply Assistant.command
+   - O app vai para Aplicativos e um atalho aparece na Área de Trabalho
+
+Se o Mac bloquear na primeira abertura:
+   - Clique com o botão direito em JobApplyAssistant.app → Abrir → Abrir
+   - (só precisa fazer isso uma vez)
+
+Precisa do Google Chrome instalado.
+
+Download atualizado:
+https://github.com/Krassusky/gui-job-aplication1/releases/latest

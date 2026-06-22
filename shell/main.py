@@ -196,6 +196,10 @@ def launch_gui(host: str = "127.0.0.1", port: int = 5000) -> None:
 
     if sys.platform == "win32":
         strip_download_zone_identifiers()
+    elif sys.platform == "darwin":
+        from shell.mac_quarantine import strip_download_quarantine
+
+        strip_download_quarantine()
 
     # 1. Single-instance lock
     if not acquire_lock():

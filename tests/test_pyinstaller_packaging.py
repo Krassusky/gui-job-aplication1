@@ -129,10 +129,16 @@ class TestFR097ElectronRemoval:
         """Install helper scripts exist for Windows and macOS."""
         assert Path("scripts/install_shortcuts_win.bat").exists()
         assert Path("scripts/install_shortcuts_win.ps1").exists()
+        assert Path("scripts/unblock_win.bat").exists()
         assert Path("scripts/install_shortcuts_mac.command").exists()
+        assert Path("scripts/unblock_mac.command").exists()
+        assert Path("COMECE-AQUI.txt").exists()
+        assert Path("COMECE-AQUI-MAC.txt").exists()
 
     def test_ci_package_bundles_install_scripts(self):
         """ci_package.sh copies install helpers into release artifacts."""
         content = Path("scripts/ci_package.sh").read_text(encoding="utf-8")
         assert "Install JobApply Assistant.bat" in content
         assert "Install JobApply Assistant.command" in content
+        assert "Desbloquear arquivos" in content
+        assert "COMECE-AQUI" in content
