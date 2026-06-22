@@ -146,6 +146,33 @@ def _shutdown(host: str, port: int) -> None:
     logger.info("Shell shutdown complete")
 
 
+def _start_webview_with_retry(webview_module: Any, attempts: int = 3) -> None:
+    """Start pywebview on Windows with short retries for cold CLR startup."""
+    from shell.win_motw import strip_download_zone_identifiers
+
+    last_error: Exception | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            webview_module.start()
+            return
+        except RuntimeError as exc:
+            last_error = exc
+            message = str(exc)
+            if "Python.Runtime.Loader.Initialize" not in message:
+                raise
+            logger.warning(
+                "PyWebView CLR startup failed (attempt %d/%d): %s",
+                attempt,
+                attempts,
+                exc,
+            )
+            if attempt < attempts:
+                strip_download_zone_identifiers()
+                time.sleep(0.5 * attempt)
+    if last_error is not None:
+        raise last_error
+
+
 def launch_gui(host: str = "127.0.0.1", port: int = 5000) -> None:
     """Launch the PyWebView desktop shell.
 
@@ -165,6 +192,10 @@ def launch_gui(host: str = "127.0.0.1", port: int = 5000) -> None:
 
     from shell.single_instance import acquire_lock
     from shell.tray import create_tray
+    from shell.win_motw import strip_download_zone_identifiers
+
+    if sys.platform == "win32":
+        strip_download_zone_identifiers()
 
     # 1. Single-instance lock
     if not acquire_lock():
@@ -234,7 +265,10 @@ def launch_gui(host: str = "127.0.0.1", port: int = 5000) -> None:
 
     # 6. Run PyWebView event loop (blocks until window is destroyed)
     try:
-        webview.start()
+        if sys.platform == "win32":
+            _start_webview_with_retry(webview)
+        else:
+            webview.start()
     finally:
         if not _app_state["quitting"]:
             _quit_app()

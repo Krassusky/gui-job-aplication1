@@ -46,6 +46,10 @@ a = Analysis(
         "flask_socketio",
         # PyWebView
         "webview",
+        "webview.platforms.winforms",
+        "pythonnet",
+        "clr_loader",
+        "clr",
         # System tray
         "pystray",
         "PIL",
@@ -77,6 +81,7 @@ a = Analysis(
         "shell.main",
         "shell.tray",
         "shell.single_instance",
+        "shell.win_motw",
     ],
     hookspath=[],
     hooksconfig={},
@@ -121,7 +126,7 @@ coll = COLLECT(
     a.datas,
     strip=False,
     upx=True,
-    upx_exclude=[],
+    upx_exclude=["Python.Runtime.dll"],
     name="JobApplyAssistant",
 )
 

@@ -14,7 +14,8 @@ INSTALAÇÃO
 2. Execute Install JobApply Assistant.bat para criar atalhos na Área de Trabalho e Menu Iniciar
    (ou abra a pasta e execute JobApplyAssistant.exe diretamente)
 3. Se o Windows SmartScreen avisar: "Mais informações" → "Executar assim mesmo"
-4. Instale o Google Chrome (obrigatório) se ainda não tiver
+4. Se o app não abrir na primeira vez: clique com o botão direito no .zip baixado → Propriedades → marque "Desbloquear" → extraia de novo
+5. Instale o Google Chrome (obrigatório) se ainda não tiver
 
 PRIMEIRO USO
 ------------

@@ -149,6 +149,10 @@ def main() -> None:
     is_frozen = getattr(sys, "frozen", False)
 
     if args.gui or is_frozen:
+        if is_frozen and sys.platform == "win32":
+            from shell.win_motw import strip_download_zone_identifiers
+
+            strip_download_zone_identifiers()
         # PyWebView desktop mode — Flask starts in a daemon thread
         from shell import launch_gui
 
