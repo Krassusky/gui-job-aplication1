@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from config.settings import get_data_dir
 from core.platform_info import get_mac_app_bundle_name
@@ -42,7 +42,7 @@ def _load_state() -> dict[str, Any]:
     if not path.is_file():
         return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return cast(dict[str, Any], json.loads(path.read_text(encoding="utf-8")))
     except (OSError, json.JSONDecodeError) as e:
         logger.debug("Could not read shortcuts state: %s", e)
         return {}
