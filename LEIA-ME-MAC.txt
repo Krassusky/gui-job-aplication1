@@ -15,7 +15,9 @@ No Mac Intel mais antigo:
 INSTALAÇÃO
 ----------
 1. Extraia o .zip (duplo clique)
-2. Arraste JobApplyAssistant.app para a pasta Aplicativos
+2. Dê duplo clique em Install JobApply Assistant.command para copiar para Aplicativos
+   e criar um atalho na Área de Trabalho
+   (ou arraste JobApplyAssistant.app para a pasta Aplicativos manualmente)
 3. Na primeira vez: clique com o botão direito → Abrir → Abrir
    (macOS bloqueia apps não assinados por segurança)
 4. Instale o Google Chrome (obrigatório) se ainda não tiver

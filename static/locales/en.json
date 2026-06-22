@@ -313,7 +313,27 @@
     "schedule_description": "Auto-start and stop the bot on a time schedule. When enabled, the bot runs only during the configured days and time window.",
     "answers_description": "Pre-fill answers for common application questions (Workday, Ashby, etc.). These are used automatically when the bot encounters matching questions.",
     "section_updates": "Updates",
-    "updates_help": "Check for new versions published on GitHub and install them without leaving the app."
+    "updates_help": "Check for new versions published on GitHub and install them without leaving the app.",
+    "section_shortcuts": "Desktop shortcuts",
+    "shortcuts_help": "Create a Desktop icon and Start Menu entry so you can launch the app like any other program."
+  },
+
+  "shortcuts": {
+    "create": "Create desktop shortcut",
+    "recreate": "Recreate shortcuts",
+    "create_now": "Yes, create shortcuts",
+    "not_now": "Not now",
+    "installing": "Creating shortcuts...",
+    "install_success": "Shortcuts created successfully.",
+    "install_failed": "Could not create shortcuts.",
+    "status_error": "Could not load shortcut status.",
+    "status_installed": "Desktop and Start Menu shortcuts are installed.",
+    "status_desktop_only": "Desktop shortcut is installed.",
+    "status_missing": "No desktop shortcut found yet.",
+    "dev_mode": "Desktop shortcuts are available in the packaged app (.exe or .app).",
+    "prompt_title": "Create a desktop shortcut?",
+    "prompt_body_win": "Create a Desktop and Start Menu shortcut so you can launch Job Apply Assistant with one click.",
+    "prompt_body_mac": "Add Job Apply Assistant to Applications and create a Desktop shortcut for quick access."
   },
 
   "updates": {

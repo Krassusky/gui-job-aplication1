@@ -74,7 +74,26 @@
     "label_job_languages": "Buscar e candidatar-se nestes idiomas",
     "job_languages_help": "Usado na busca LinkedIn, match de vagas, seção Idiomas do currículo e formulários.",
     "section_updates": "Atualizações",
-    "updates_help": "Verifique novas versões publicadas no GitHub e instale sem sair do app."
+    "updates_help": "Verifique novas versões publicadas no GitHub e instale sem sair do app.",
+    "section_shortcuts": "Atalhos na área de trabalho",
+    "shortcuts_help": "Crie um ícone na Área de Trabalho e no Menu Iniciar para abrir o app com um clique."
+  },
+  "shortcuts": {
+    "create": "Criar atalho na área de trabalho",
+    "recreate": "Recriar atalhos",
+    "create_now": "Sim, criar atalhos",
+    "not_now": "Agora não",
+    "installing": "Criando atalhos...",
+    "install_success": "Atalhos criados com sucesso.",
+    "install_failed": "Não foi possível criar os atalhos.",
+    "status_error": "Não foi possível carregar o status dos atalhos.",
+    "status_installed": "Atalhos na Área de Trabalho e no Menu Iniciar instalados.",
+    "status_desktop_only": "Atalho na Área de Trabalho instalado.",
+    "status_missing": "Nenhum atalho na área de trabalho encontrado.",
+    "dev_mode": "Atalhos na área de trabalho estão disponíveis no app empacotado (.exe ou .app).",
+    "prompt_title": "Criar atalho na área de trabalho?",
+    "prompt_body_win": "Crie atalhos na Área de Trabalho e no Menu Iniciar para abrir o Job Apply Assistant com um clique.",
+    "prompt_body_mac": "Adicione o Job Apply Assistant em Aplicativos e crie um atalho na Área de Trabalho."
   },
   "updates": {
     "current_version": "Versão atual:",

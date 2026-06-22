@@ -11,7 +11,8 @@ Escolha o arquivo: JobApplyAssistant-X.Y.Z-win-x64.zip
 INSTALAÇÃO
 ----------
 1. Extraia o .zip em uma pasta (ex.: C:\JobApplyAssistant)
-2. Abra a pasta e execute JobApplyAssistant.exe
+2. Execute Install JobApply Assistant.bat para criar atalhos na Área de Trabalho e Menu Iniciar
+   (ou abra a pasta e execute JobApplyAssistant.exe diretamente)
 3. Se o Windows SmartScreen avisar: "Mais informações" → "Executar assim mesmo"
 4. Instale o Google Chrome (obrigatório) se ainda não tiver
 

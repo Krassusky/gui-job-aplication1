@@ -279,6 +279,7 @@ def create_app() -> tuple[Flask, SocketIO]:
     from routes.portal_auth import portal_auth_bp
     from routes.profile import profile_bp
     from routes.resumes import resumes_bp
+    from routes.shortcuts import shortcuts_bp
     from routes.updates import updates_bp
     from routes.workflow import workflow_bp
 
@@ -293,6 +294,7 @@ def create_app() -> tuple[Flask, SocketIO]:
     flask_app.register_blueprint(portal_auth_bp)
     flask_app.register_blueprint(lifecycle_bp)
     flask_app.register_blueprint(workflow_bp)
+    flask_app.register_blueprint(shortcuts_bp)
     flask_app.register_blueprint(updates_bp)
 
     # Register SocketIO handlers

@@ -305,7 +305,29 @@
     "ai_description": "Configura una API de LLM para generar CVs y cartas de presentación personalizadas. Tu clave de API se almacena localmente y nunca se comparte.",
     "login_description": "Abre un navegador para iniciar sesión en tus plataformas de empleo. Tu sesión se guarda para que el bot pueda postularse en tu nombre.",
     "schedule_description": "Iniciar y detener el bot automáticamente según un horario. Cuando está habilitado, el bot solo se ejecuta durante los días y la ventana horaria configurados.",
-    "answers_description": "Rellena previamente las respuestas a preguntas comunes de solicitud (Workday, Ashby, etc.). Se usan automáticamente cuando el bot encuentra preguntas coincidentes."
+    "answers_description": "Rellena previamente las respuestas a preguntas comunes de solicitud (Workday, Ashby, etc.). Se usan automáticamente cuando el bot encuentra preguntas coincidentes.",
+    "section_shortcuts": "Accesos directos en el escritorio",
+    "shortcuts_help": "Crea un icono en el Escritorio y en el menú Inicio para abrir la app con un clic.",
+    "section_updates": "Actualizaciones",
+    "updates_help": "Busca nuevas versiones en GitHub e instálalas sin salir de la app."
+  },
+
+  "shortcuts": {
+    "create": "Crear acceso directo en el escritorio",
+    "recreate": "Recrear accesos directos",
+    "create_now": "Sí, crear accesos directos",
+    "not_now": "Ahora no",
+    "installing": "Creando accesos directos...",
+    "install_success": "Accesos directos creados correctamente.",
+    "install_failed": "No se pudieron crear los accesos directos.",
+    "status_error": "No se pudo cargar el estado de los accesos directos.",
+    "status_installed": "Accesos directos en el Escritorio y menú Inicio instalados.",
+    "status_desktop_only": "Acceso directo en el Escritorio instalado.",
+    "status_missing": "Aún no hay acceso directo en el escritorio.",
+    "dev_mode": "Los accesos directos están disponibles en la app empaquetada (.exe o .app).",
+    "prompt_title": "¿Crear un acceso directo en el escritorio?",
+    "prompt_body_win": "Crea accesos directos en el Escritorio y menú Inicio para abrir Job Apply Assistant con un clic.",
+    "prompt_body_mac": "Añade Job Apply Assistant a Aplicaciones y crea un acceso directo en el Escritorio."
   },
 
   "login": {

@@ -11,6 +11,7 @@ import { loadKnowledgeBase } from './knowledge-base.js';
 import { loadSettings, loadApplyMode, loadDefaultResume } from './settings.js';
 import { loadWorkflow } from './workflow.js';
 import { loadUpdatePanel, maybeAutoCheckUpdates } from './updates.js';
+import { loadShortcutsPanel, maybeShowShortcutsPrompt } from './shortcuts.js';
 import { initHelp, maybeStartTourOnFirstVisit } from './help.js';
 import { onReady } from './i18n.js';
 
@@ -55,7 +56,7 @@ export function switchScreen(name) {
   if (name === 'analytics') loadAnalytics();
   if (name === 'resumes') loadResumes();
   if (name === 'knowledge-base') loadKnowledgeBase();
-  if (name === 'settings') { loadSettings(); loadUpdatePanel(); }
+  if (name === 'settings') { loadSettings(); loadShortcutsPanel(); loadUpdatePanel(); }
 }
 
 export function showApp() {
@@ -68,5 +69,6 @@ export function showApp() {
     initHelp();
     maybeStartTourOnFirstVisit();
     setTimeout(() => maybeAutoCheckUpdates(), 2500);
+    maybeShowShortcutsPrompt();
   });
 }

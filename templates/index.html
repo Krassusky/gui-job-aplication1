@@ -1435,6 +1435,21 @@
         </div>
 
         <hr style="border:none; border-top:1px solid var(--border); margin:8px 0;">
+        <h3 data-i18n="settings.section_shortcuts">Desktop shortcuts</h3>
+        <p class="subtitle text-dim" style="font-size:.85rem;" data-i18n="settings.shortcuts_help">
+          Create a Desktop icon and Start Menu entry so you can launch the app like any other program.
+        </p>
+        <div id="shortcuts-panel" class="update-panel card" style="background:var(--bg-secondary); padding:16px;">
+          <p id="shortcuts-dev-notice" class="update-dev-notice hidden" data-i18n="shortcuts.dev_mode">
+            Desktop shortcuts are available in the packaged app (.exe or .app).
+          </p>
+          <p id="shortcuts-status-msg" class="update-status-msg" aria-live="polite"></p>
+          <div class="update-actions">
+            <button type="button" class="btn btn-primary btn-sm" id="btn-install-shortcuts" onclick="installDesktopShortcuts()" data-i18n="shortcuts.create">Create desktop shortcut</button>
+          </div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid var(--border); margin:8px 0;">
         <h3 data-i18n="settings.section_updates">Updates</h3>
         <p class="subtitle text-dim" style="font-size:.85rem;" data-i18n="settings.updates_help">
           Check for new versions published on GitHub and install them without leaving the app.
@@ -1553,6 +1568,20 @@
 </div>
 
 <!-- Guided Tour -->
+<!-- Desktop shortcuts prompt (packaged builds) -->
+<div id="shortcuts-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title" style="position:fixed; inset:0; background:rgba(0,0,0,.65); display:flex; align-items:center; justify-content:center; z-index:10000;">
+  <div class="card" style="max-width:480px; padding:24px; margin:16px;">
+    <h2 id="shortcuts-title" data-i18n="shortcuts.prompt_title">Create a desktop shortcut?</h2>
+    <p id="shortcuts-body" class="subtitle" data-i18n="shortcuts.prompt_body_win">
+      Create a Desktop and Start Menu shortcut so you can launch Job Apply Assistant with one click.
+    </p>
+    <div class="wizard-nav" style="margin-top:20px;">
+      <button type="button" class="btn btn-ghost" onclick="declineShortcutsPrompt()" data-i18n="shortcuts.not_now">Not now</button>
+      <button type="button" class="btn btn-primary" onclick="installDesktopShortcuts()" data-i18n="shortcuts.create_now">Yes, create shortcuts</button>
+    </div>
+  </div>
+</div>
+
 <div id="tour-overlay" class="tour-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="tour-title">
   <div id="tour-spotlight" class="tour-spotlight" aria-hidden="true">
     <div id="tour-backdrop" class="tour-backdrop"></div>

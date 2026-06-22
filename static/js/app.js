@@ -12,6 +12,7 @@ import { initTagInputs, addTag, addTagFromInput, removeTag } from './tag-input.j
 import { initFileUpload } from './file-upload.js';
 import { initNavTabs, showApp, switchScreen } from './navigation.js';
 import { showWizard, setWizardStep, wizardNext, wizardPrev, wizardFinish, wizardRefreshFiles } from './wizard.js';
+import { maybeShowShortcutsPrompt } from './shortcuts.js';
 import { botControl } from './bot-control.js';
 import { clearFeed } from './feed.js';
 import { debounceSearch, loadApplications, goAppPage, updateAppStatus, updateAppNotes, viewCoverLetter, viewApplicationDetail, updateDetailStatus, saveDetailNotes, exportCSV } from './applications.js';
@@ -28,6 +29,7 @@ import { loadKnowledgeBase, loadKBEntries, uploadKBDocument, editKBEntry, saveKB
 import { loadWorkflow, workflowGoStep, workflowCompleteStep, workflowAnalyzeJobs, workflowApplySearch, workflowAnalyzeRecruiters, workflowAnalyzeReferences, workflowFinish, workflowCopyPrompt, workflowCopyText, isWorkflowIncomplete } from './workflow.js';
 import { initHelp, openHelpCenter, closeHelpCenter, startHelpTour, tourNext, tourPrev, tourSkip, filterHelpCategory } from './help.js';
 import { loadUpdatePanel, maybeAutoCheckUpdates, checkForUpdates, downloadUpdate, installUpdate, runUpdateNow, dismissUpdateBanner } from './updates.js';
+import { installDesktopShortcuts, declineShortcutsPrompt } from './shortcuts.js';
 import { previewKBResume, closeKBPreview, initResumePreview } from './resume-preview.js';
 import { initResumeBuilder, openResumeBuilder, closeResumeBuilder, addToResume, removeFromResume, moveEntryUp, moveEntryDown, savePreset, loadPreset, deletePreset, previewBuilderResume, autoFillFromJD } from './resume-builder.js';
 
@@ -131,6 +133,8 @@ window.downloadUpdate = downloadUpdate;
 window.installUpdate = installUpdate;
 window.runUpdateNow = runUpdateNow;
 window.dismissUpdateBanner = dismissUpdateBanner;
+window.installDesktopShortcuts = installDesktopShortcuts;
+window.declineShortcutsPrompt = declineShortcutsPrompt;
 window.t = t;
 window.getLocale = getLocale;
 window.setLocale = setLocale;

@@ -68,8 +68,8 @@ class TestFR096PyInstallerPackaging:
         assert "console=False" in spec_content
 
     def test_spec_app_name(self, spec_content):
-        """Spec uses AutoApply as app name."""
-        assert 'name="AutoApply"' in spec_content
+        """Spec uses JobApplyAssistant as app name."""
+        assert 'name="JobApplyAssistant"' in spec_content
 
     def test_spec_icon_configured(self, spec_content):
         """Spec has icon configured for Windows."""
@@ -124,3 +124,15 @@ class TestFR097ElectronRemoval:
         """pystray is listed in pyproject.toml dependencies."""
         content = Path("pyproject.toml").read_text(encoding="utf-8")
         assert "pystray" in content
+
+    def test_install_shortcut_scripts_exist(self):
+        """Install helper scripts exist for Windows and macOS."""
+        assert Path("scripts/install_shortcuts_win.bat").exists()
+        assert Path("scripts/install_shortcuts_win.ps1").exists()
+        assert Path("scripts/install_shortcuts_mac.command").exists()
+
+    def test_ci_package_bundles_install_scripts(self):
+        """ci_package.sh copies install helpers into release artifacts."""
+        content = Path("scripts/ci_package.sh").read_text(encoding="utf-8")
+        assert "Install JobApply Assistant.bat" in content
+        assert "Install JobApply Assistant.command" in content
