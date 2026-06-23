@@ -76,6 +76,13 @@ class TestLocaleFile:
 class TestBackendI18n:
     """LE-3: core/i18n.py translation functions."""
 
+    @pytest.fixture(autouse=True)
+    def _reset_locale_en(self):
+        from core.i18n import set_locale
+        set_locale("en")
+        yield
+        set_locale("en")
+
     def test_t_returns_string(self):
         """t() returns translated string for valid key.  # AC-LE3.5"""
         from core.i18n import t
@@ -106,10 +113,12 @@ class TestBackendI18n:
         result = t("errors.chrome_failed")
         assert "{error}" in result
 
-    def test_get_locale_returns_en(self):
-        """get_locale() returns 'en' by default.  # AC-LE3.10"""
-        from core.i18n import get_locale
-        assert get_locale() == "en"
+    def test_get_locale_returns_pt(self):
+        """get_locale() returns 'pt' by default (pt-BR UI).  # AC-LE3.10"""
+        from core.i18n import get_locale, set_locale
+
+        set_locale("pt")
+        assert get_locale() == "pt"
 
     def test_get_available_locales(self):
         """get_available_locales() includes 'en'.  # AC-LE3.11"""
@@ -126,6 +135,15 @@ class TestBackendI18n:
         from core.i18n import t
         assert t("errors.unauthorized") == "Unauthorized"
 
+    def test_missing_key_falls_back_to_english(self):
+        """Complete locales return translated strings; unknown keys fall back to the key."""
+        from core.i18n import set_locale, t
+
+        set_locale("pt")
+        assert t("errors.internal_error") == "Erro interno do servidor"
+        assert t("nonexistent.key.path") == "nonexistent.key.path"
+        set_locale("en")
+
 
 # ===================================================================
 # LE-3-03 — API Endpoint
@@ -134,6 +152,13 @@ class TestBackendI18n:
 
 class TestLocalesAPI:
     """LE-3: /api/locales endpoint."""
+
+    @pytest.fixture(autouse=True)
+    def _reset_locale_en(self):
+        from core.i18n import set_locale
+        set_locale("en")
+        yield
+        set_locale("en")
 
     @pytest.fixture()
     def client(self, tmp_path, monkeypatch):
@@ -163,6 +188,13 @@ class TestLocalesAPI:
 
 class TestRoutesUseI18n:
     """LE-3: Backend routes return translated error messages."""
+
+    @pytest.fixture(autouse=True)
+    def _reset_locale_en(self):
+        from core.i18n import set_locale
+        set_locale("en")
+        yield
+        set_locale("en")
 
     @pytest.fixture()
     def client(self, tmp_path, monkeypatch):
@@ -455,3 +487,36 @@ class TestSpanishTranslation:
             rv = c.put("/api/locale", json={"locale": "es"})
             assert rv.status_code == 200
             assert rv.get_json()["locale"] == "es"
+
+
+class TestPortugueseTranslation:
+    """Complete pt.json locale file parity with en.json."""
+
+    def test_pt_json_exists(self):
+        assert Path("static/locales/pt.json").exists()
+
+    def test_pt_json_key_parity(self):
+        en = json.loads(Path("static/locales/en.json").read_text(encoding="utf-8"))
+        pt = json.loads(Path("static/locales/pt.json").read_text(encoding="utf-8"))
+
+        def _get_keys(d, prefix=""):
+            keys = set()
+            for k, v in d.items():
+                full = f"{prefix}.{k}" if prefix else k
+                if isinstance(v, dict):
+                    keys |= _get_keys(v, full)
+                else:
+                    keys.add(full)
+            return keys
+
+        en_keys = _get_keys(en)
+        pt_keys = _get_keys(pt)
+        missing = en_keys - pt_keys
+        assert not missing, f"Keys in en.json missing from pt.json: {missing}"
+
+    def test_pt_json_no_untranslated_spot_check(self):
+        en = json.loads(Path("static/locales/en.json").read_text(encoding="utf-8"))
+        pt = json.loads(Path("static/locales/pt.json").read_text(encoding="utf-8"))
+        assert pt["nav"]["dashboard"] != en["nav"]["dashboard"]
+        assert pt["kb"]["title"] != en["kb"]["title"]
+        assert pt["errors"]["not_found"] != en["errors"]["not_found"]

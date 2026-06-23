@@ -4,20 +4,31 @@
     "page_title": "AutoApply — Panel Inteligente de Solicitudes de Empleo",
     "skip_to_content": "Saltar al contenido principal"
   },
-
+  "loading": {
+    "app_boot": "Iniciando AutoApply...",
+    "please_wait": "Por favor, espera...",
+    "loading_screen": "Cargando...",
+    "starting_bot": "Iniciando el bot...",
+    "pausing_bot": "Pausando el bot...",
+    "stopping_bot": "Deteniendo el bot... Esto puede tardar un momento.",
+    "opening_browser": "Abriendo el navegador...",
+    "saving_settings": "Guardando configuración..."
+  },
   "nav": {
+    "workflow": "Guía",
     "dashboard": "Panel",
     "applications": "Solicitudes",
     "profile": "Archivos de Experiencia",
     "settings": "Configuración",
     "analytics": "Analíticas",
     "resumes": "Biblioteca de CVs",
-    "knowledge_base": "Base de Conocimiento"
+    "knowledge_base": "Datos para candidaturas",
+    "knowledge_base_hint": "Experiencia, respuestas de selección y documentos para personalizar cada solicitud"
   },
-
   "wizard": {
     "welcome_title": "Bienvenido a AutoApply",
     "welcome_subtitle": "AutoApply automatiza tu búsqueda de empleo escaneando plataformas, encontrando oportunidades que coincidan con tu perfil, generando CVs y cartas de presentación personalizadas, y postulándote en tu nombre. Vamos a configurarlo en unos sencillos pasos.",
+    "welcome_cv_tip": "Consejo: en el paso Perfil puedes subir tu CV para completar tu información en segundos.",
     "ai_checking": "Verificando proveedor de IA...",
     "ai_configured": "Proveedor de IA configurado",
     "ai_not_configured": "Sin proveedor de IA — configúralo en Configuración después de la instalación",
@@ -71,9 +82,16 @@
     "skip": "Omitir",
     "experience_level": "Nivel de Experiencia",
     "resume_upload_aria": "Subir archivo de CV. Haz clic o arrastra y suelta. PDF o DOCX, máximo 5MB",
-    "platform_login_subtitle": "AutoApply abre una ventana del navegador donde puedes iniciar sesión en tus cuentas. Las sesiones se guardan para que solo necesites hacerlo una vez."
+    "platform_login_subtitle": "AutoApply abre una ventana del navegador donde puedes iniciar sesión en tus cuentas. Las sesiones se guardan para que solo necesites hacerlo una vez.",
+    "import_title": "Relleno rápido — ahorra tiempo",
+    "import_ai_ready": "Sube tu CV o importa desde LinkedIn para completar los campos automáticamente.",
+    "import_ai_required": "Configura un proveedor de IA abajo para usar el autocompletado. Aún puedes ingresar tu perfil manualmente.",
+    "ai_setup_summary": "Configurar proveedor de IA (habilita autocompletado)",
+    "import_applied_short": "Campos del perfil actualizados. Revisa y edita lo necesario abajo, luego haz clic en Siguiente.",
+    "resume_autofill_hint": "Si hay un proveedor de IA configurado, subir aquí también completa tu perfil y preferencias de empleo.",
+    "resume_autofill": "Leyendo tu currículum para completar los campos del perfil…",
+    "resume_autofill_done": "Perfil y preferencias actualizados desde tu currículum."
   },
-
   "form": {
     "first_name": "Nombre",
     "last_name": "Apellido",
@@ -103,7 +121,7 @@
     "remote_only": "Solo Remoto",
     "salary_min": "Salario Mínimo",
     "keywords_include": "Palabras Clave a Incluir",
-    "keywords_exclude": "Palabras Clave a Excluir",
+    "keywords_exclude": "Palabras clave a excluir",
     "experience_levels": "Niveles de Experiencia",
     "required": "requerido",
     "select_placeholder": "— Seleccionar —",
@@ -128,7 +146,6 @@
     "filename": "Nombre de Archivo",
     "content": "Contenido"
   },
-
   "placeholder": {
     "first_name": "María",
     "last_name": "García",
@@ -162,7 +179,6 @@
     "file_content": "Introduce los detalles de tu experiencia...",
     "years_exp": "ej. 5"
   },
-
   "button": {
     "start": "Iniciar",
     "pause": "Pausar",
@@ -189,14 +205,12 @@
     "approve_and_apply": "Aprobar y Aplicar",
     "upload": "Subir"
   },
-
   "bot": {
     "running": "En Ejecución",
     "paused": "Pausado",
     "stopped": "Detenido",
     "uptime_default": "--:--"
   },
-
   "ai": {
     "connected": "IA Conectada",
     "not_configured": "IA (no configurada)",
@@ -204,7 +218,6 @@
     "warning_body": "El bot usará plantillas básicas en lugar de CVs generados por IA. Configúralo en",
     "warning_link": "Configuración → Proveedor de IA"
   },
-
   "applications": {
     "no_results": "No se encontraron solicitudes.",
     "load_error": "No se pudieron cargar las solicitudes.",
@@ -244,7 +257,6 @@
     "col_notes": "Notas",
     "notes_placeholder": "Agrega notas sobre esta solicitud..."
   },
-
   "profile": {
     "edit_file": "Editar Archivo",
     "new_file": "Nuevo Archivo de Experiencia",
@@ -257,19 +269,49 @@
     "screen_title": "Archivos de Experiencia",
     "loading": "Cargando archivos..."
   },
-
   "settings": {
     "select_provider": "Selecciona un proveedor primero",
     "enter_api_key": "Ingresa una clave de API",
     "validating": "Validando...",
     "key_valid": "La clave de API es válida",
     "key_invalid": "Clave de API inválida o error del proveedor",
+    "key_insufficient_balance": "La clave de API fue reconocida, pero tu cuenta no tiene saldo suficiente. Añade créditos en tu cuenta del proveedor.",
     "validation_failed": "La validación falló — verifica tu conexión",
+    "add_provider": "Añadir proveedor",
+    "update_provider": "Actualizar proveedor",
+    "provider_added": "Proveedor añadido. Haz clic en Guardar configuración para mantener todos los cambios.",
+    "no_providers_yet": "Aún no hay proveedores de IA guardados. Completa el formulario abajo y haz clic en Añadir proveedor.",
+    "active_provider": "Activo",
+    "use_provider": "Usar",
+    "label_provider_name": "Nombre del proveedor",
+    "provider_name_placeholder": "ej. DeepSeek principal",
+    "ai_provider_default_label": "Proveedor de IA",
+    "profile_import_title": "Relleno rápido desde CV o LinkedIn",
+    "profile_import_hint": "Sube tu CV o importa desde LinkedIn para completar nombre, contacto, bio, cargos y habilidades. Requiere un proveedor de IA configurado.",
+    "import_from_cv": "Importar desde CV",
+    "import_from_linkedin": "Importar desde LinkedIn",
+    "import_linkedin_zip": "ZIP de exportación de LinkedIn",
+    "apply_import": "Aplicar al perfil",
+    "importing": "Analizando documento…",
+    "linkedin_importing": "Leyendo perfil de LinkedIn (inicia sesión vía Login en plataformas primero)…",
+    "import_ready": "Revisa la vista previa abajo y haz clic en Aplicar al perfil.",
+    "import_applied": "Perfil actualizado. Haz clic en Guardar configuración para mantener los cambios.",
+    "import_applied_with_file": "Perfil actualizado y archivo de experiencia guardado como {file}. Haz clic en Guardar configuración.",
+    "import_failed": "Error al importar. Verifica tu proveedor de IA e inténtalo de nuevo.",
+    "import_nothing_pending": "No hay datos de importación para aplicar. Ejecuta Importar desde LinkedIn o CV primero.",
+    "applying_import": "Aplicando…",
+    "preview_job_titles": "Cargos",
+    "preview_skills": "Habilidades",
     "save_error": "Error al guardar la configuración.",
     "saved": "¡Guardado!",
     "screen_title": "Configuración",
     "section_language": "Idioma",
     "label_language": "Idioma",
+    "section_languages": "Idiomas",
+    "languages_help": "Idioma de la app, idiomas que hablas e idiomas para buscar empleos y aplicar.",
+    "label_app_language": "Idioma de la interfaz",
+    "label_job_languages": "Buscar y aplicar en estos idiomas",
+    "job_languages_help": "Usado en búsqueda LinkedIn, coincidencia de empleos, sección de idiomas del CV y formularios.",
     "section_profile": "Perfil",
     "section_ai_provider": "Proveedor de IA",
     "ai_provider_hint": "Configura una API de LLM para generar CVs y cartas de presentación personalizadas para cada solicitud.",
@@ -285,6 +327,7 @@
     "app_answers_hint": "Rellena previamente las respuestas a preguntas comunes de solicitud. Usado por Workday, Ashby y otros portales ATS.",
     "section_platform_login": "Inicio de Sesión en Plataformas",
     "platform_login_hint": "Abre un navegador para iniciar sesión en tus plataformas de empleo. Las sesiones se guardan entre reinicios.",
+    "platform_login_tip": "Consejo: deja Chrome abierto un momento tras iniciar sesión para que la sesión se guarde bien.",
     "open_linkedin_login": "Abrir Inicio de Sesión en LinkedIn",
     "open_indeed_login": "Abrir Inicio de Sesión en Indeed",
     "section_automation": "Opciones de Automatización",
@@ -306,12 +349,12 @@
     "login_description": "Abre un navegador para iniciar sesión en tus plataformas de empleo. Tu sesión se guarda para que el bot pueda postularse en tu nombre.",
     "schedule_description": "Iniciar y detener el bot automáticamente según un horario. Cuando está habilitado, el bot solo se ejecuta durante los días y la ventana horaria configurados.",
     "answers_description": "Rellena previamente las respuestas a preguntas comunes de solicitud (Workday, Ashby, etc.). Se usan automáticamente cuando el bot encuentra preguntas coincidentes.",
+    "section_updates": "Actualizaciones",
+    "updates_help": "Busca nuevas versiones en GitHub e instálalas sin salir de la app.",
     "section_shortcuts": "Accesos directos en el escritorio",
     "shortcuts_help": "Crea un icono en el Escritorio y en el menú Inicio para abrir la app con un clic.",
-    "section_updates": "Actualizaciones",
-    "updates_help": "Busca nuevas versiones en GitHub e instálalas sin salir de la app."
+    "upload_failed": "Error al subir"
   },
-
   "shortcuts": {
     "create": "Crear acceso directo en el escritorio",
     "recreate": "Recrear accesos directos",
@@ -329,14 +372,34 @@
     "prompt_body_win": "Crea accesos directos en el Escritorio y menú Inicio para abrir Job Apply Assistant con un clic.",
     "prompt_body_mac": "Añade Job Apply Assistant a Aplicaciones y crea un acceso directo en el Escritorio."
   },
-
+  "updates": {
+    "current_version": "Versión actual:",
+    "check": "Buscar actualizaciones",
+    "checking": "Buscando actualizaciones...",
+    "up_to_date": "Ya tienes la versión más reciente.",
+    "available": "Actualización disponible: v{version}",
+    "download": "Descargar actualización",
+    "downloading": "Descargando actualización...",
+    "install": "Instalar y reiniciar",
+    "installing": "Instalando — la app se reiniciará...",
+    "install_confirm": "¿Instalar la actualización y reiniciar JobApply Assistant ahora?",
+    "release_notes": "Notas de la versión",
+    "check_failed": "No se pudo buscar actualizaciones. Comprueba tu conexión.",
+    "download_failed": "Error en la descarga. Inténtalo más tarde.",
+    "install_failed": "No se pudo instalar la actualización.",
+    "already_latest": "Ya tienes la versión más reciente.",
+    "dev_mode": "La instalación automática funciona en el .exe instalado. Aquí puedes buscar nuevas versiones.",
+    "update_now": "Actualizar ahora",
+    "banner": "Nueva versión disponible: v{version}",
+    "dismiss": "Ahora no",
+    "preparing": "Preparando actualización..."
+  },
   "login": {
     "open_error": "Error al abrir el navegador",
     "connection_error": "No se pudo conectar al servidor.",
     "connected": "Conectado",
     "not_connected": "No conectado"
   },
-
   "review": {
     "unknown": "Desconocido",
     "at": "en",
@@ -344,11 +407,9 @@
     "cover_letter_heading": "Carta de Presentación",
     "edit_and_apply": "Editar y Aplicar"
   },
-
   "feed": {
     "empty": "Sin actividad aún. Inicia el bot para comenzar."
   },
-
   "analytics": {
     "applications_label": "Solicitudes",
     "screen_title": "Analíticas",
@@ -396,7 +457,6 @@
     "empty_state": "No hay datos de solicitudes aún. Inicia el bot para comenzar a rastrear analíticas.",
     "error_loading": "No se pudieron cargar los datos de analíticas."
   },
-
   "status": {
     "applied": "Aplicada",
     "interview": "Entrevista",
@@ -406,7 +466,6 @@
     "error": "Error",
     "manual_required": "Requiere Acción Manual"
   },
-
   "schedule": {
     "enabled": "Habilitado",
     "days_of_week": "Días de la Semana",
@@ -422,7 +481,6 @@
     "enable_schedule": "Habilitar Programación",
     "active": "Activo"
   },
-
   "experience_levels": {
     "entry": "Nivel Inicial",
     "mid": "Nivel Medio",
@@ -434,7 +492,6 @@
     "mid_short": "Medio",
     "lead_short": "Líder"
   },
-
   "errors": {
     "unauthorized": "No autorizado",
     "too_many_requests": "Demasiadas solicitudes",
@@ -452,6 +509,7 @@
     "description_not_found": "Descripción del puesto no encontrada",
     "bot_already_running": "El bot ya está en ejecución",
     "config_not_found": "Configuración no encontrada. Complete la configuración primero.",
+    "request_failed": "La solicitud falló. Inténtalo de nuevo.",
     "no_review_pending": "No hay solicitudes pendientes de revisión",
     "cover_letter_required": "La carta de presentación es requerida",
     "invalid_days": "Días inválidos: {days}",
@@ -469,9 +527,18 @@
     "invalid_filename": "Nombre de archivo inválido",
     "invalid_filename_detail": "Nombre de archivo inválido. Use solo letras, números, guiones, guiones bajos, espacios y extensión .txt",
     "content_required": "El contenido es requerido",
-    "file_not_found": "Archivo no encontrado"
+    "file_not_found": "Archivo no encontrado",
+    "template_not_found": "Plantilla no encontrada",
+    "pdflatex_not_found": "pdflatex no encontrado — compilación LaTeX no disponible",
+    "compilation_failed": "Falló la compilación LaTeX",
+    "invalid_request": "Solicitud inválida",
+    "ai_required_for_import": "Configura un proveedor de IA en Configuración antes de importar datos del perfil.",
+    "no_file_provided": "No se proporcionó ningún archivo",
+    "unsupported_import_format": "Formato no compatible. Usa PDF, DOCX, TXT o MD.",
+    "file_too_large": "Archivo demasiado grande",
+    "linkedin_zip_required": "Sube un archivo ZIP de exportación de datos de LinkedIn",
+    "extracted_data_required": "se requieren datos extraídos"
   },
-
   "dashboard": {
     "stat_found": "Encontrados",
     "stat_applied": "Aplicados",
@@ -484,9 +551,10 @@
     "activity_feed": "Feed de Actividad",
     "ai_warning": "Proveedor de IA no configurado — usando plantillas de respaldo. Agrega una clave de API en",
     "ai_warning_link": "Configuración → Proveedor de IA",
-    "ai_warning_suffix": "para CVs y cartas de presentación personalizadas."
+    "ai_warning_suffix": "para CVs y cartas de presentación personalizadas.",
+    "stat_skipped": "Omitidas",
+    "mode_hint": "Automático envía sin detenerse. Revisión pausa para que apruebes cada empleo. Observación solo busca empleos, sin aplicar."
   },
-
   "eeo": {
     "gender_male": "Masculino",
     "gender_female": "Femenino",
@@ -505,7 +573,6 @@
     "disability_no": "No, no tengo una discapacidad",
     "disability_decline": "Prefiero no responder"
   },
-
   "modal": {
     "close_aria": "Cerrar diálogo",
     "cover_letter_title": "Carta de Presentación",
@@ -520,11 +587,9 @@
     "confirm_delete_title": "¿Eliminar Archivo?",
     "confirm_delete_desc": "Esta acción no se puede deshacer."
   },
-
   "file_upload": {
     "click_to_change": "Haz clic para cambiar"
   },
-
   "resumes": {
     "title": "Biblioteca de CVs",
     "search_placeholder": "Buscar por empresa o título del puesto...",
@@ -573,9 +638,8 @@
     "diff_unchanged": "Sin cambios",
     "diff_legend": "Leyenda de Diferencias"
   },
-
   "kb": {
-    "title": "Base de Conocimiento",
+    "title": "Datos para candidaturas",
     "upload_title": "Subir Documentos",
     "upload_desc": "Sube currículums, descripciones de proyectos, exportaciones de LinkedIn — cuantos más, mejor.",
     "upload_drop": "Arrastra archivos aquí o haz clic para buscar",
@@ -590,6 +654,10 @@
     "col_subsection": "Contexto",
     "col_job_types": "Tipos de Trabajo",
     "col_tags": "Etiquetas",
+    "col_job_title": "Puesto",
+    "col_company": "Empresa",
+    "col_dates": "Fechas",
+    "col_location": "Ubicación",
     "col_source": "Fuente",
     "col_actions": "Acciones",
     "filter_all": "Todas las Categorías",
@@ -606,9 +674,13 @@
     "category_summary": "Resumen",
     "category_certification": "Certificaciones",
     "category_award": "Premios",
-    "category_volunteer": "Voluntariado"
+    "category_volunteer": "Voluntariado",
+    "subtitle": "Guarda experiencia, habilidades y respuestas para formularios. Sube documentos o añade entradas — la IA usa solo estos datos para adaptar CVs y completar solicitudes.",
+    "nav_help": "Experiencia, preguntas frecuentes y documentos para personalizar solicitudes",
+    "documents_title": "Documentos subidos",
+    "search_placeholder": "Buscar entradas...",
+    "upload_failed": "Error al subir"
   },
-
   "reuse": {
     "settings_title": "Ensamblaje Inteligente de Currículum",
     "enabled": "Habilitar ensamblaje por Base de Conocimiento",
@@ -621,9 +693,24 @@
     "template": "Plantilla",
     "font_family": "Familia de Fuente",
     "font_size": "Tamaño de Fuente",
-    "margin": "Margen de Página"
+    "margin": "Margen de Página",
+    "templates_title": "Plantillas de CV",
+    "templates_desc": "Sube tus plantillas Overleaf/LaTeX (.tex). Usa variables Jinja2 como \\VAR{name}, \\VAR{email}, \\BLOCK{for entry in experience} para contenido dinámico.",
+    "upload_template": "Subir plantilla",
+    "template_name": "Nombre de plantilla",
+    "template_desc": "Descripción",
+    "set_default": "Establecer predeterminada",
+    "default_badge": "Predeterminada",
+    "custom_badge": "Personalizada",
+    "builtin_badge": "Integrada",
+    "no_custom_templates": "Aún no hay plantillas personalizadas. Sube un archivo .tex para empezar.",
+    "template_saved": "Plantilla guardada correctamente",
+    "template_deleted": "Plantilla eliminada",
+    "generate_hint": "La IA genera un CV personalizado usando solo los datos guardados aquí. No se inventa información.",
+    "job_description_label": "Descripción del puesto",
+    "job_description_placeholder": "Pega la descripción del puesto para generar un CV personalizado...",
+    "generate_btn": "Generar CV"
   },
-
   "builder": {
     "title": "Constructor de Currículum",
     "desc": "Arrastra y suelta entradas del KB para crear un currículum personalizado.",
@@ -652,7 +739,6 @@
     "generating": "Generando vista previa PDF...",
     "preview_error": "Falló la generación de vista previa"
   },
-
   "ats": {
     "title": "Puntuación de Compatibilidad ATS",
     "score_label": "Puntuación ATS",
@@ -671,7 +757,9 @@
     "categories_present": "Secciones Presentes",
     "categories_missing": "Secciones Faltantes",
     "no_gaps": "Sin brechas — ¡excelente coincidencia!",
-    "analyzing": "Analizando compatibilidad ATS..."
+    "analyzing": "Analizando compatibilidad ATS...",
+    "job_description_label": "Descripción del puesto",
+    "job_description_placeholder": "Pega la descripción del puesto..."
   },
   "portal_auth": {
     "missing_fields": "Dominio, usuario y contraseña son obligatorios.",
@@ -697,5 +785,136 @@
     "done_button": "Ya Inicié Sesión",
     "skip_button": "Omitir Este Trabajo",
     "unknown": "Portal desconocido"
+  },
+  "workflow": {
+    "title": "Guía paso a paso",
+    "subtitle": "Sigue estos pasos en orden. Puedes volver en cualquier momento.",
+    "step1_short": "Perfil",
+    "step2_short": "Análisis",
+    "step3_short": "Búsqueda",
+    "step4_short": "Reclutadores",
+    "step5_short": "Referencias",
+    "step6_short": "Aplicar",
+    "step1_title": "1. Prepara tu perfil",
+    "step1_desc": "Inicia sesión en LinkedIn e Indeed primero, luego completa tus datos, sube tu CV (PDF) y añade archivos de experiencia.",
+    "step2_title": "2. Encuentra empleos alineados",
+    "step2_desc": "La IA analiza tu perfil y sugiere roles, palabras clave y mejoras. ¿Sin IA? Usa el prompt para la extensión Claude en Chrome.",
+    "step3_title": "3. Configura la búsqueda",
+    "step3_desc": "Aplica las sugerencias del análisis a la configuración de búsqueda.",
+    "step4_title": "4. Encuentra reclutadores",
+    "step4_desc": "Amplía tu red: identifica reclutadores de tu área y mensajes de conexión.",
+    "step5_title": "5. Perfiles de referencia",
+    "step5_desc": "Aprende de profesionales destacados en tu campo y mejora tu LinkedIn.",
+    "step6_title": "6. Rutina diaria de solicitudes",
+    "step6_desc": "Ve al Panel, haz clic en Iniciar, revisa cada empleo y pulsa Aprobar y Aplicar. Máximo 15 por día.",
+    "step6_tip_title": "Recordatorio",
+    "step6_tip": "Modo Revisión activo: apruebas cada solicitud antes de enviarla.",
+    "open_settings": "Abrir Configuración",
+    "open_profile": "Archivos de experiencia",
+    "step_done": "Listo — Siguiente paso",
+    "back": "Atrás",
+    "run_analysis": "Analizar mi perfil",
+    "run_recruiters": "Generar plan de networking",
+    "run_references": "Generar guía de perfiles",
+    "apply_suggestions": "Aplicar sugerencias a la búsqueda",
+    "linkedin_login": "Abrir login de LinkedIn",
+    "indeed_login": "Abrir login de Indeed",
+    "go_dashboard": "Ir al Panel",
+    "analyzing": "Analizando...",
+    "analysis_error": "El análisis falló. Revisa tu IA en Configuración o usa el prompt manual.",
+    "manual_mode": "Modo manual — extensión Claude en Chrome",
+    "manual_instructions": "Copia este prompt, abre LinkedIn en Chrome con la extensión Claude, pégalo y ejecútalo:",
+    "copy_prompt": "Copiar prompt",
+    "strengths": "Fortalezas",
+    "gaps": "Brechas a cubrir",
+    "improvements": "Mejoras",
+    "suggested_titles": "Cargos sugeridos",
+    "suggested_keywords": "Palabras clave sugeridas",
+    "suggested_locations": "Ubicaciones sugeridas",
+    "search_preview": "Vista previa de búsqueda",
+    "applied_ok": "Aplicado a la configuración ✓",
+    "check_profile": "Perfil completado",
+    "check_cv": "CV subido",
+    "check_experience": "Archivos de experiencia añadidos",
+    "check_languages": "Idiomas configurados (PT / EN / ES)",
+    "check_ai": "Proveedor de IA configurado (opcional)"
+  },
+  "help": {
+    "nav_help": "Ayuda",
+    "nav_tour": "Tour",
+    "center_title": "Centro de Ayuda",
+    "center_subtitle": "Preguntas frecuentes, consejos y ejemplos para usar JobApply Assistant.",
+    "search_placeholder": "Buscar en la ayuda...",
+    "start_tour": "Iniciar tour guiado",
+    "no_results": "No se encontraron resultados. Prueba otra palabra o categoría.",
+    "tip_label": "Ver consejo",
+    "category_all": "Todo",
+    "category_start": "Primeros pasos",
+    "category_workflow": "Guía",
+    "category_apply": "Solicitudes",
+    "category_settings": "Configuración",
+    "category_languages": "Idiomas",
+    "category_troubleshoot": "Problemas",
+    "faq1_q": "¿Por dónde empiezo?",
+    "faq1_a": "Abre la pestaña **Guía** y sigue los 6 pasos en orden. Empieza completando tu perfil en Configuración y subiendo tu CV en PDF.",
+    "faq2_q": "¿Necesito configurar IA?",
+    "faq2_a": "No es obligatorio. Sin IA, la Guía ofrece prompts para copiar en la extensión Claude en Chrome. Con IA, el análisis y las cartas son automáticos.",
+    "faq3_q": "¿Qué es la pestaña Guía?",
+    "faq3_a": "Es un recorrido paso a paso: perfil → análisis → búsqueda LinkedIn → reclutadores → perfiles referencia → solicitudes diarias. El progreso se guarda automáticamente.",
+    "faq4_q": "¿Cómo aplico las sugerencias del análisis?",
+    "faq4_a": "En el paso 3 de la Guía, haz clic en **Aplicar sugerencias a la búsqueda**. Esto completa cargos, palabras clave y ubicaciones en Configuración → Búsqueda.",
+    "faq5_q": "¿Qué es el modo Revisión?",
+    "faq5_a": "Antes de cada solicitud ves el empleo y la carta. Pulsa **Aprobar y Aplicar** para enviar, **Omitir** para ignorar o **Editar** para ajustar la carta.",
+    "faq6_q": "¿Cuántas solicitudes por día?",
+    "faq6_a": "El límite predeterminado es **15 por día** para evitar bloqueos en LinkedIn. Ajústalo en Configuración → Límites.",
+    "faq7_q": "¿Dónde configuro perfil y CV?",
+    "faq7_a": "Ve a **Configuración → Perfil** para nombre, correo y dirección. Sube el CV predeterminado desde el **Panel** o Configuración.",
+    "faq8_q": "¿Para qué sirven los idiomas?",
+    "faq8_a": "Tres opciones: idioma de la app (interfaz), idiomas que hablas (CV y formularios) e idiomas de búsqueda (empleos en PT, EN y ES).",
+    "faq9_q": "Vivo en México — ¿cómo configuro la búsqueda?",
+    "faq9_a": "En Configuración → Búsqueda, pon **México** como país y ciudades como **Ciudad de México** o **Remoto**. Activa PT, EN y ES en idiomas de búsqueda.",
+    "faq10_q": "El bot pidió login en LinkedIn — ¿qué hago?",
+    "faq10_a": "Abre el navegador, inicia sesión en LinkedIn manualmente y pulsa **Ya inicié sesión**. Hazlo una vez; la sesión queda guardada.",
+    "faq11_q": "La app no abre o dice que ya está en uso",
+    "faq11_a": "Cierra otras ventanas de JobApply Assistant. Si persiste, borra `.lock` en `C:\\Users\\TuNombre\\.autoapply\\` y vuelve a abrir.",
+    "faq12_q": "¿Necesito Google Chrome?",
+    "faq12_a": "Sí. La app usa Chrome para buscar empleos y aplicar en LinkedIn. Instala la versión más reciente antes de usarla.",
+    "faq13_q": "¿Debo dejar abierto el navegador de inicio de sesión?",
+    "faq13_a": "Sí — después de iniciar sesión en LinkedIn o Indeed, deja Chrome abierto hasta que la app muestre **Conectado**. La sesión se guarda y solo necesitas hacerlo una vez por plataforma.",
+    "tour_skip": "Saltar tour",
+    "tour_back": "Atrás",
+    "tour_next": "Siguiente",
+    "tour_finish": "Finalizar",
+    "tour_example_label": "Ejemplo:",
+    "tour1_title": "Bienvenido a la Guía",
+    "tour1_body": "Esta es tu página de inicio. Sigue los 6 pasos en orden — cada uno prepara el siguiente.",
+    "tour1_example": "Paso 1: completa el perfil. Paso 6: aplica desde el Panel.",
+    "tour2_title": "Lista del perfil",
+    "tour2_body": "Completa cada ítem: perfil, CV en PDF, archivos de experiencia e idiomas.",
+    "tour2_example": "Ej.: sube tu CV en PDF y añade un archivo work_experience.txt.",
+    "tour3_title": "Idiomas",
+    "tour3_body": "Marca PT, EN y ES según los hables. Mejora la búsqueda y completa formularios de LinkedIn.",
+    "tour3_example": "Brasileño en México: PT nativo, EN fluido, ES fluido.",
+    "tour4_title": "Modo de solicitud",
+    "tour4_body": "Revisión = apruebas cada empleo antes de enviar (recomendado). Automático envía sin parar.",
+    "tour4_example": "Mantén **Revisión** hasta sentirte cómodo.",
+    "tour5_title": "Iniciar búsqueda",
+    "tour5_body": "Haz clic en Iniciar para buscar empleos en LinkedIn. Usa Detener cuando termines.",
+    "tour5_example": "Dedica 15–30 min al día: Iniciar → revisar → Aprobar u Omitir.",
+    "tour6_title": "Tarjeta de revisión",
+    "tour6_body": "Cuando aparezca un empleo, lee la carta, edítala si quieres y pulsa Aprobar y Aplicar.",
+    "tour6_example": "Empleo: Analista de Datos — lee la carta, ajusta una frase, aprueba.",
+    "tour_demo_label": "Ejemplo del tour",
+    "tour6_demo_title": "Analista de Datos — Empresa Ejemplo",
+    "tour6_demo_letter": "Hola, tengo experiencia en análisis de datos y Python. Me gustaría contribuir al equipo...",
+    "tour7_title": "Historial de solicitudes",
+    "tour7_body": "Todas las solicitudes enviadas u omitidas aparecen aquí. Exporta CSV para seguimiento.",
+    "tour7_example": "Filtra por estado: Enviada, Omitida, Error.",
+    "tour8_title": "Cargos y palabras clave",
+    "tour8_body": "Añade títulos de empleo que buscas. La app los usa en la búsqueda de LinkedIn.",
+    "tour8_example": "Ej.: Software Engineer, Analista de Datos, Product Manager.",
+    "tip_apply_mode": "Revisión: apruebas cada solicitud. Automático: envía sin parar. Observación: solo muestra empleos sin aplicar.",
+    "tip_languages": "El idioma de la app cambia la interfaz. Los idiomas hablados van en el CV. Los de búsqueda amplían empleos en PT, EN y ES.",
+    "tip_start_bot": "Iniciar comienza la búsqueda en LinkedIn. Usa Detener al terminar. En Revisión, cada empleo pausa para tu aprobación."
   }
 }

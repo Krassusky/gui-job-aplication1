@@ -2,6 +2,7 @@
 import { t, getLocale } from './i18n.js';
 import { escHtml } from './helpers.js';
 import { switchScreen } from './navigation.js';
+import { checkLoginSessions } from './login.js';
 
 let _state = { current_step: 1, completed_steps: [], analyses: {}, readiness: {} };
 let _lastJobAnalysis = null;
@@ -14,6 +15,7 @@ export async function loadWorkflow() {
     renderChecklist();
     showWorkflowStep(_state.current_step || 1);
     restoreAnalyses();
+    checkLoginSessions();
   } catch (e) {
     console.warn('Workflow load failed:', e);
   }

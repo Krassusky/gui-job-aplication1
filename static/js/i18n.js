@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════════
 
    Loads translation strings from JSON locale files.
-   Default locale is 'en'. Set via <html lang="xx"> or query param ?lang=xx.
+   Default locale is 'pt' (pt-BR content). Override via localStorage, ?lang=, or <html lang="xx">.
 
    Usage:
      import { t, setLocale, getLocale } from './i18n.js';
@@ -12,7 +12,7 @@
 */
 
 let _strings = {};
-let _locale = 'en';
+let _locale = 'pt';
 let _ready = false;
 const _readyCallbacks = [];
 
@@ -95,7 +95,7 @@ export function onReady(fn) {
   _readyCallbacks.push(fn);
 }
 
-/** Detect locale from localStorage, query param ?lang=, <html lang>, or default 'en'. */
+/** Detect locale from localStorage, query param ?lang=, <html lang>, or default 'pt'. */
 function detectLocale() {
   // localStorage takes priority (FR-132)
   try {

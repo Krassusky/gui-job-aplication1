@@ -112,8 +112,8 @@ class TestKeyringIntegration:
 
         save_config(cfg)
 
-        # Verify keyring was called
-        mock_keyring.set_password.assert_called_once_with(
+        # Verify keyring was called for provider entry and legacy alias
+        mock_keyring.set_password.assert_any_call(
             "autoapply", "llm_api_key", "sk-test-123"
         )
         # Verify config.json has empty api_key
@@ -167,8 +167,8 @@ class TestKeyringIntegration:
 
         cfg = load_config()
 
-        # Key should be migrated to keyring
-        mock_keyring.set_password.assert_called_once_with(
+        # Key should be migrated to keyring (provider-specific + legacy alias)
+        mock_keyring.set_password.assert_any_call(
             "autoapply", "llm_api_key", "sk-migrate-me"
         )
         # config.json should now have empty api_key

@@ -99,6 +99,17 @@ def run_bot(
 
         if not enabled_searchers:
             logger.warning("No enabled search platforms configured")
+            emit("ERROR", message="No job platforms enabled. Enable LinkedIn or Indeed in Settings.")
+            return
+
+        criteria = config.search_criteria
+        if not criteria.job_titles or not criteria.locations:
+            msg = (
+                "Job search is not configured: add at least one Job Title and one Location "
+                "in Settings → Job Search, then restart the bot."
+            )
+            logger.warning(msg)
+            emit("ERROR", message=msg)
             return
 
         while not state.stop_flag:

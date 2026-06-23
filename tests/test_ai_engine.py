@@ -169,14 +169,31 @@ class TestValidateAPIKey:
     """Test API key validation."""
 
     def test_valid_key(self):
-        """Valid key returns True."""
+        """Valid key returns success result."""
         with patch("core.ai_engine._call_llm", return_value="OK"):
-            assert validate_api_key("anthropic", "sk-valid") is True
+            result = validate_api_key("anthropic", "sk-valid")
+            assert result.valid is True
+            assert result.error_code == "ok"
 
     def test_invalid_key(self):
-        """Invalid key returns False."""
-        with patch("core.ai_engine._call_llm", side_effect=RuntimeError("401")):
-            assert validate_api_key("anthropic", "bad-key") is False
+        """Invalid key returns invalid_key result."""
+        with patch(
+            "core.ai_engine._call_llm",
+            side_effect=RuntimeError("Anthropic API error (401): invalid"),
+        ):
+            result = validate_api_key("anthropic", "bad-key")
+            assert result.valid is False
+            assert result.error_code == "invalid_key"
+
+    def test_insufficient_balance(self):
+        """402 responses are reported as insufficient balance."""
+        with patch(
+            "core.ai_engine._call_llm",
+            side_effect=RuntimeError("Deepseek API error (402): Insufficient Balance"),
+        ):
+            result = validate_api_key("deepseek", "sk-test")
+            assert result.valid is False
+            assert result.error_code == "insufficient_balance"
 
 
 # ===================================================================

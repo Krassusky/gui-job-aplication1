@@ -8,9 +8,11 @@ from __future__ import annotations
 
 import json
 import logging
+import uuid
 from pathlib import Path
+from typing import Any
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 _logger = logging.getLogger(__name__)
 
@@ -21,6 +23,12 @@ _logger = logging.getLogger(__name__)
 _keyring_available: bool | None = None  # lazy-init sentinel
 KEYRING_SERVICE = "autoapply"
 KEYRING_KEY_NAME = "llm_api_key"
+
+
+def _keyring_key_name(provider_id: str | None = None) -> str:
+    if provider_id:
+        return f"{KEYRING_KEY_NAME}_{provider_id}"
+    return KEYRING_KEY_NAME
 
 
 def _check_keyring() -> bool:
@@ -121,10 +129,89 @@ class ScheduleConfig(BaseModel):
     end_time: str = "17:00"    # HH:MM in 24-hour local time
 
 
-class LLMConfig(BaseModel):
+class LLMProviderEntry(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    label: str = ""
     provider: str = ""  # "anthropic" | "openai" | "google" | "deepseek"
     api_key: str = ""
     model: str = ""  # Empty = use default for provider
+
+
+class LLMConfig(BaseModel):
+    provider: str = ""  # Active provider (legacy + convenience mirror)
+    api_key: str = ""
+    model: str = ""
+    providers: list[LLMProviderEntry] = Field(default_factory=list)
+    active_id: str = ""
+
+    @model_validator(mode="after")
+    def _normalize_providers(self) -> "LLMConfig":
+        if not self.providers and self.provider:
+            entry_id = self.active_id or str(uuid.uuid4())
+            self.providers = [
+                LLMProviderEntry(
+                    id=entry_id,
+                    label=self._default_label(self.provider),
+                    provider=self.provider,
+                    api_key=self.api_key,
+                    model=self.model,
+                )
+            ]
+            self.active_id = entry_id
+        elif self.providers and not self.active_id:
+            self.active_id = self.providers[0].id
+        self._sync_legacy_from_active()
+        return self
+
+    @staticmethod
+    def _default_label(provider: str) -> str:
+        labels = {
+            "anthropic": "Anthropic",
+            "openai": "OpenAI",
+            "google": "Google Gemini",
+            "deepseek": "DeepSeek",
+            "groq": "Groq",
+            "openrouter": "OpenRouter",
+        }
+        return labels.get(provider, provider.title() or "AI Provider")
+
+    def get_active_entry(self) -> LLMProviderEntry | None:
+        if not self.providers:
+            if self.provider:
+                return LLMProviderEntry(
+                    id=self.active_id or "legacy",
+                    label=self._default_label(self.provider),
+                    provider=self.provider,
+                    api_key=self.api_key,
+                    model=self.model,
+                )
+            return None
+        for entry in self.providers:
+            if entry.id == self.active_id:
+                return entry
+        return self.providers[0]
+
+    def _sync_legacy_from_active(self) -> None:
+        active = self.get_active_entry()
+        if not active:
+            return
+        self.provider = active.provider
+        self.api_key = active.api_key
+        self.model = active.model
+        self.active_id = active.id
+
+    def sync_active_entry_from_legacy(self) -> None:
+        """Update the active provider entry from legacy top-level fields."""
+        if not self.providers:
+            return
+        for entry in self.providers:
+            if entry.id == self.active_id:
+                entry.provider = self.provider
+                entry.api_key = self.api_key
+                entry.model = self.model
+                if not entry.label:
+                    entry.label = self._default_label(entry.provider)
+                return
 
 
 class ResumeReuseConfig(BaseModel):
@@ -172,6 +259,58 @@ def get_data_dir() -> Path:
     return Path.home() / ".autoapply"
 
 
+def _hydrate_llm_keys_from_keyring(llm: LLMConfig) -> None:
+    if not _check_keyring():
+        return
+
+    import keyring
+
+    legacy_key = keyring.get_password(KEYRING_SERVICE, _keyring_key_name())
+    if legacy_key and not llm.api_key:
+        llm.api_key = legacy_key
+
+    for entry in llm.providers:
+        if entry.api_key:
+            continue
+        stored = keyring.get_password(KEYRING_SERVICE, _keyring_key_name(entry.id))
+        if stored:
+            entry.api_key = stored
+
+    llm._sync_legacy_from_active()
+
+
+def _migrate_legacy_key_to_keyring(llm: LLMConfig) -> bool:
+    if not _check_keyring() or not llm.api_key:
+        return False
+
+    import keyring
+
+    active = llm.get_active_entry()
+    key_name = _keyring_key_name(active.id if active else None)
+    if keyring.get_password(KEYRING_SERVICE, key_name):
+        return False
+
+    keyring.set_password(KEYRING_SERVICE, key_name, llm.api_key)
+    if key_name != _keyring_key_name():
+        keyring.set_password(KEYRING_SERVICE, _keyring_key_name(), llm.api_key)
+    return True
+
+
+def _store_llm_keys_in_keyring(llm: LLMConfig) -> None:
+    if not _check_keyring():
+        return
+
+    import keyring
+
+    for entry in llm.providers:
+        if entry.api_key:
+            keyring.set_password(
+                KEYRING_SERVICE, _keyring_key_name(entry.id), entry.api_key
+            )
+    if llm.api_key:
+        keyring.set_password(KEYRING_SERVICE, _keyring_key_name(), llm.api_key)
+
+
 def load_config() -> AppConfig | None:
     config_path = get_data_dir() / "config.json"
     if not config_path.exists():
@@ -180,34 +319,28 @@ def load_config() -> AppConfig | None:
         data = json.load(f)
     config = AppConfig(**data)
 
-    # Retrieve API key from keyring if available
-    if _check_keyring():
-        import keyring
+    _hydrate_llm_keys_from_keyring(config.llm)
 
-        stored_key = keyring.get_password(KEYRING_SERVICE, KEYRING_KEY_NAME)
-        if stored_key:
-            config.llm.api_key = stored_key
-        elif config.llm.api_key:
-            # Migration: move plaintext key into keyring
-            keyring.set_password(
-                KEYRING_SERVICE, KEYRING_KEY_NAME, config.llm.api_key
-            )
-            _save_config_raw(config, strip_api_key=True)
-            _logger.info("Migrated API key from config.json to OS keyring")
+    if _migrate_legacy_key_to_keyring(config.llm):
+        _save_config_raw(config, strip_api_key=_check_keyring())
+        _logger.info("Migrated API key from config.json to OS keyring")
 
+    config.llm._sync_legacy_from_active()
     return config
 
 
 def save_config(config: AppConfig) -> None:
-    # Store API key in keyring if possible
-    if config.llm.api_key and _check_keyring():
-        import keyring
-
-        keyring.set_password(
-            KEYRING_SERVICE, KEYRING_KEY_NAME, config.llm.api_key
-        )
-
+    config.llm.sync_active_entry_from_legacy()
+    config.llm._sync_legacy_from_active()
+    _store_llm_keys_in_keyring(config.llm)
     _save_config_raw(config, strip_api_key=_check_keyring())
+
+
+def _strip_llm_api_keys(dump: dict[str, Any]) -> None:
+    llm = dump.get("llm", {})
+    llm["api_key"] = ""
+    for entry in llm.get("providers", []):
+        entry["api_key"] = ""
 
 
 def _save_config_raw(config: AppConfig, strip_api_key: bool = False) -> None:
@@ -216,7 +349,7 @@ def _save_config_raw(config: AppConfig, strip_api_key: bool = False) -> None:
     config_path = data_dir / "config.json"
     dump = config.model_dump()
     if strip_api_key:
-        dump.get("llm", {})["api_key"] = ""
+        _strip_llm_api_keys(dump)
     with open(config_path, "w", encoding="utf-8") as f:
         json.dump(dump, f, indent=2)
 

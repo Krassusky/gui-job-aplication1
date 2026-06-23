@@ -5,7 +5,7 @@
 export const state = {
   currentScreen: 'dashboard',
   wizardStep: 0,
-  wizardData: { profile: {}, preferences: {}, resume_file: null },
+  wizardData: { profile: {}, preferences: {}, resume_file: null, imported_experience_text: null, llm: null },
   tagInputs: {},            // id -> string[]
   botStatus: 'stopped',     // running | paused | stopped
   botStartTime: null,

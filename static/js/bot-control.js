@@ -3,13 +3,42 @@
    ═══════════════════════════════════════════════════════════════ */
 import { state } from './state.js';
 import { t } from './i18n.js';
+import { showLoading, hideLoading, setButtonLoading, setButtonsDisabled } from './loading.js';
+
+const ACTION_MESSAGES = {
+  start: 'loading.starting_bot',
+  pause: 'loading.pausing_bot',
+  stop: 'loading.stopping_bot',
+};
 
 export async function botControl(action) {
+  const btnStart = document.getElementById('btn-start');
+  const btnPause = document.getElementById('btn-pause');
+  const btnStop = document.getElementById('btn-stop');
+  const botButtons = [btnStart, btnPause, btnStop];
+  const activeBtn = action === 'start' ? btnStart : action === 'pause' ? btnPause : btnStop;
+  const previousStatus = state.botStatus || 'stopped';
+
+  setButtonsDisabled(botButtons, true);
+  setButtonLoading(activeBtn, true);
+  showLoading(t(ACTION_MESSAGES[action] || 'loading.please_wait'));
+
   try {
-    await fetch(`/api/bot/${action}`, { method: 'POST' });
+    const res = await fetch(`/api/bot/${action}`, { method: 'POST' });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || t('errors.request_failed'));
+      updateBotUI(previousStatus);
+      return;
+    }
     updateBotUI(action === 'start' ? 'running' : action === 'pause' ? 'paused' : 'stopped');
   } catch (e) {
     console.warn('Bot control error:', e);
+    alert(t('errors.request_failed'));
+    updateBotUI(previousStatus);
+  } finally {
+    hideLoading();
+    setButtonLoading(activeBtn, false);
   }
 }
 

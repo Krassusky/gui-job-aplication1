@@ -277,10 +277,15 @@ class TestConfigRoutes:
         )
         assert resp.status_code == 400
 
-    @patch("routes.config._validate_api_key", return_value=True)
+    @patch("routes.config._validate_api_key")
     def test_validate_ai_key_success(self, mock_validate):
         import json
 
+        mock_validate.return_value = type(
+            "Result",
+            (),
+            {"as_dict": lambda self: {"valid": True, "message": "API key is valid", "error_code": "ok"}},
+        )()
         resp = self.client.post(
             "/api/ai/validate",
             data=json.dumps({"provider": "openai", "api_key": "sk-test123"}),

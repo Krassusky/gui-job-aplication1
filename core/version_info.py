@@ -32,6 +32,13 @@ def is_newer_version(latest: str, current: str) -> bool:
 @lru_cache(maxsize=1)
 def get_app_version() -> str:
     """Return the installed application version."""
+    repo_root = Path(__file__).resolve().parent.parent
+    repo_version = _read_pyproject_version(repo_root / "pyproject.toml")
+
+    # Source/dev runs: repo pyproject.toml is authoritative (avoids stale pip metadata).
+    if not getattr(sys, "frozen", False) and repo_version:
+        return repo_version
+
     try:
         from importlib.metadata import version
 
@@ -46,8 +53,7 @@ def get_app_version() -> str:
             if ver:
                 return ver
 
-    ver = _read_pyproject_version(Path(__file__).resolve().parent.parent / "pyproject.toml")
-    return ver or "0.0.0"
+    return repo_version or "0.0.0"
 
 
 def normalize_tag(tag: str) -> str:

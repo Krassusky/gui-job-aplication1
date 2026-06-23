@@ -24,6 +24,8 @@ DEFAULT_MODELS = {
     "openai": "gpt-4o",
     "google": "gemini-2.0-flash",
     "deepseek": "deepseek-chat",
+    "groq": "llama-3.3-70b-versatile",
+    "openrouter": "meta-llama/llama-3.3-70b-instruct:free",
 }
 
 # API endpoints per provider
@@ -32,6 +34,8 @@ API_ENDPOINTS = {
     "openai": "https://api.openai.com/v1/chat/completions",
     "google": "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
     "deepseek": "https://api.deepseek.com/v1/chat/completions",
+    "groq": "https://api.groq.com/openai/v1/chat/completions",
+    "openrouter": "https://openrouter.ai/api/v1/chat/completions",
 }
 
 RESUME_PROMPT = """
@@ -190,10 +194,66 @@ def check_ai_available(llm_config) -> bool:
     """
     if not llm_config:
         return False
+    active = getattr(llm_config, "get_active_entry", None)
+    if callable(active):
+        entry = llm_config.get_active_entry()
+        if entry:
+            return bool(entry.provider and entry.api_key)
     return bool(llm_config.provider and llm_config.api_key)
 
 
-def validate_api_key(provider: str, api_key: str, model: str | None = None) -> bool:
+class APIKeyValidationResult:
+    """Result of an API key validation attempt."""
+
+    __slots__ = ("valid", "message", "error_code")
+
+    def __init__(self, valid: bool, message: str = "", error_code: str = ""):
+        self.valid = valid
+        self.message = message
+        self.error_code = error_code
+
+    def as_dict(self) -> dict[str, str | bool]:
+        payload: dict[str, str | bool] = {"valid": self.valid}
+        if self.message:
+            payload["message"] = self.message
+        if self.error_code:
+            payload["error_code"] = self.error_code
+        return payload
+
+
+def _classify_validation_error(error: Exception) -> APIKeyValidationResult:
+    """Map provider API errors to user-facing validation results."""
+    msg = str(error)
+    if "(401)" in msg or "(403)" in msg:
+        return APIKeyValidationResult(
+            False,
+            "Invalid API key. Check that the key is correct and active.",
+            "invalid_key",
+        )
+    if "(402)" in msg:
+        return APIKeyValidationResult(
+            False,
+            "API key is recognized but the account has insufficient balance. "
+            "Add credits to your provider account and try again.",
+            "insufficient_balance",
+        )
+    if "(404)" in msg and "model" in msg.lower():
+        return APIKeyValidationResult(
+            False,
+            "API key works but the selected model was not found. "
+            "Leave model blank to use the default or choose another model.",
+            "invalid_model",
+        )
+    return APIKeyValidationResult(
+        False,
+        msg or "Could not validate API key with the selected provider.",
+        "provider_error",
+    )
+
+
+def validate_api_key(
+    provider: str, api_key: str, model: str | None = None
+) -> APIKeyValidationResult:
     """Validate an API key by making a minimal test request.
 
     Args:
@@ -202,15 +262,15 @@ def validate_api_key(provider: str, api_key: str, model: str | None = None) -> b
         model: Optional model name override.
 
     Returns:
-        True if the key is valid, False otherwise.
+        APIKeyValidationResult with validity, message, and error_code.
     """
     model = model or DEFAULT_MODELS.get(provider, "")
     try:
         _call_llm(provider, api_key, model, "Reply with OK", timeout=15)
-        return True
+        return APIKeyValidationResult(True, "API key is valid", "ok")
     except Exception as e:
         logger.debug("API key validation failed for %s: %s", provider, e)
-        return False
+        return _classify_validation_error(e)
 
 
 # Retry configuration (D-6)
@@ -250,11 +310,11 @@ def _call_llm(
             return _call_anthropic(api_key, model, prompt, timeout)
         elif provider == "google":
             return _call_google(api_key, model, prompt, timeout)
-        elif provider in ("openai", "deepseek"):
+        elif provider in ("openai", "deepseek", "groq", "openrouter"):
             return _call_openai_compatible(provider, api_key, model, prompt, timeout)
         raise RuntimeError(f"Unsupported LLM provider: {provider}")
 
-    if provider not in ("anthropic", "google", "openai", "deepseek"):
+    if provider not in ("anthropic", "google", "openai", "deepseek", "groq", "openrouter"):
         raise RuntimeError(f"Unsupported LLM provider: {provider}")
 
     last_error: Exception | None = None
@@ -265,7 +325,7 @@ def _call_llm(
             last_error = e
             # Don't retry auth/client errors
             error_msg = str(e)
-            if any(f"({code})" in error_msg for code in (400, 401, 403, 404)):
+            if any(f"({code})" in error_msg for code in (400, 401, 402, 403, 404)):
                 raise
             if attempt < MAX_RETRIES:
                 delay = RETRY_BASE_DELAY * (2 ** attempt)
@@ -312,13 +372,18 @@ def _call_anthropic(api_key: str, model: str, prompt: str, timeout: int) -> str:
 def _call_openai_compatible(
     provider: str, api_key: str, model: str, prompt: str, timeout: int
 ) -> str:
-    """Call OpenAI-compatible API (OpenAI, DeepSeek)."""
+    """Call OpenAI-compatible API (OpenAI, DeepSeek, Groq, OpenRouter)."""
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    if provider == "openrouter":
+        headers["HTTP-Referer"] = "https://github.com/autoapply"
+        headers["X-Title"] = "AutoApply"
+
     resp = requests.post(
         API_ENDPOINTS[provider],
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
+        headers=headers,
         json={
             "model": model,
             "messages": [{"role": "user", "content": prompt}],

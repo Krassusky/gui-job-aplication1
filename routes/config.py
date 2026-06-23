@@ -20,6 +20,10 @@ logger = logging.getLogger(__name__)
 
 config_bp = Blueprint("config", __name__)
 
+SUPPORTED_LLM_PROVIDERS = (
+    "anthropic", "openai", "google", "deepseek", "groq", "openrouter",
+)
+
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -80,10 +84,10 @@ def validate_ai_key():
     model = data.get("model", "")
     if not provider or not api_key:
         return jsonify({"error": t("errors.provider_key_required")}), 400
-    if provider not in ("anthropic", "openai", "google", "deepseek"):
+    if provider not in SUPPORTED_LLM_PROVIDERS:
         return jsonify({"error": t("errors.unsupported_provider", provider=provider)}), 400
-    valid = _validate_api_key(provider, api_key, model or None)
-    return jsonify({"valid": valid})
+    result = _validate_api_key(provider, api_key, model or None)
+    return jsonify(result.as_dict())
 
 
 # ---------------------------------------------------------------------------

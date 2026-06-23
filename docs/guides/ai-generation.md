@@ -26,6 +26,8 @@ Configure your provider in **Settings → AI Provider**.
 | **OpenAI** | `gpt-4o` | OpenAI Chat Completions |
 | **Google** | `gemini-2.0-flash` | Google Gemini API |
 | **DeepSeek** | `deepseek-chat` | DeepSeek Chat API |
+| **Groq** | `llama-3.3-70b-versatile` | Groq OpenAI-compatible API (free tier) |
+| **OpenRouter** | `meta-llama/llama-3.3-70b-instruct:free` | OpenRouter API (free `:free` models) |
 
 You can override the default model in the model field. Leave it blank to use the default.
 

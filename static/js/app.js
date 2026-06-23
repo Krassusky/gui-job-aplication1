@@ -6,21 +6,22 @@
 import './auth.js';
 
 import { t, getLocale, setLocale, onReady } from './i18n.js';
+import { hideAppBootLoader } from './loading.js';
 import { state } from './state.js';
 import { initSocket } from './socket.js';
 import { initTagInputs, addTag, addTagFromInput, removeTag } from './tag-input.js';
 import { initFileUpload } from './file-upload.js';
 import { initNavTabs, showApp, switchScreen } from './navigation.js';
-import { showWizard, setWizardStep, wizardNext, wizardPrev, wizardFinish, wizardRefreshFiles } from './wizard.js';
+import { showWizard, setWizardStep, wizardNext, wizardPrev, wizardFinish, wizardRefreshFiles, wizardImportFromCV, wizardImportFromLinkedIn, wizardImportLinkedInZip, wizardValidateLLMKey } from './wizard.js';
 import { maybeShowShortcutsPrompt } from './shortcuts.js';
 import { botControl } from './bot-control.js';
 import { clearFeed } from './feed.js';
 import { debounceSearch, loadApplications, goAppPage, updateAppStatus, updateAppNotes, viewCoverLetter, viewApplicationDetail, updateDetailStatus, saveDetailNotes, exportCSV } from './applications.js';
 import { loadProfileFiles, showFileModal, editFile, saveFile, confirmDeleteFile } from './profile.js';
-import { loadSettings, saveSettings, updateScheduleUI, changeApplyMode, initBotToggles, uploadDefaultResume, removeDefaultResume, loadDefaultResume, onLLMProviderChange, validateLLMKey, onLocaleChange } from './settings.js';
+import { loadSettings, saveSettings, updateScheduleUI, changeApplyMode, initBotToggles, uploadDefaultResume, removeDefaultResume, loadDefaultResume, onLLMProviderChange, validateLLMKey, onLocaleChange, addLLMProvider, removeLLMProvider, setActiveLLMProvider, editLLMProvider, importFromCV, importFromLinkedIn, importLinkedInZip, applyImportedProfile, clearProfileImport, initProfileImportButtons } from './settings.js';
 import { reviewApprove, reviewEdit, reviewManualSubmit, reviewSkip } from './review.js';
 import { loginGateDone, loginGateSkip } from './login-gate.js';
-import { openLoginBrowser, closeLoginBrowser } from './login.js';
+import { openLoginBrowser, closeLoginBrowser, initLoginButtons } from './login.js';
 import { closeModal } from './modals.js';
 import { updateAIIndicators } from './ai-status.js';
 import { switchAnalyticsPeriod } from './analytics.js';
@@ -41,6 +42,10 @@ window.wizardNext = wizardNext;
 window.wizardPrev = wizardPrev;
 window.wizardFinish = wizardFinish;
 window.wizardRefreshFiles = wizardRefreshFiles;
+window.wizardImportFromCV = wizardImportFromCV;
+window.wizardImportFromLinkedIn = wizardImportFromLinkedIn;
+window.wizardImportLinkedInZip = wizardImportLinkedInZip;
+window.wizardValidateLLMKey = wizardValidateLLMKey;
 window.openLoginBrowser = openLoginBrowser;
 window.closeLoginBrowser = closeLoginBrowser;
 window.botControl = botControl;
@@ -69,6 +74,15 @@ window.uploadDefaultResume = uploadDefaultResume;
 window.removeDefaultResume = removeDefaultResume;
 window.onLLMProviderChange = onLLMProviderChange;
 window.validateLLMKey = validateLLMKey;
+window.addLLMProvider = addLLMProvider;
+window.removeLLMProvider = removeLLMProvider;
+window.setActiveLLMProvider = setActiveLLMProvider;
+window.editLLMProvider = editLLMProvider;
+window.importFromCV = importFromCV;
+window.importFromLinkedIn = importFromLinkedIn;
+window.importLinkedInZip = importLinkedInZip;
+window.applyImportedProfile = applyImportedProfile;
+window.clearProfileImport = clearProfileImport;
 window.onLocaleChange = onLocaleChange;
 window.reviewApprove = reviewApprove;
 window.reviewEdit = reviewEdit;
@@ -219,6 +233,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   initResumePreview();
   initResumeBuilder();
   initBotToggles();
+  initLoginButtons();
+  initProfileImportButtons();
 
   try {
     const res = await fetch('/api/setup/status');
@@ -236,5 +252,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (e) {
     console.warn('Could not reach setup API, showing app:', e);
     showApp();
+  } finally {
+    hideAppBootLoader();
   }
 });

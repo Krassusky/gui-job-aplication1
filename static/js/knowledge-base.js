@@ -66,11 +66,11 @@ export async function loadKBEntries() {
     let html = `<table class="data-table kb-table" role="table" aria-label="${escAttr(t('kb.entries_title'))}">
       <thead><tr>
         <th data-i18n="kb.col_category">${escHtml(t('kb.col_category'))}</th>
-        <th>${escHtml(t('kb.col_job_title') || 'Job Title')}</th>
-        <th>${escHtml(t('kb.col_company') || 'Company')}</th>
+        <th>${escHtml(t('kb.col_job_title'))}</th>
+        <th>${escHtml(t('kb.col_company'))}</th>
         <th data-i18n="kb.col_text">${escHtml(t('kb.col_text'))}</th>
-        <th>${escHtml(t('kb.col_dates') || 'Dates')}</th>
-        <th>${escHtml(t('kb.col_location') || 'Location')}</th>
+        <th>${escHtml(t('kb.col_dates'))}</th>
+        <th>${escHtml(t('kb.col_location'))}</th>
         <th data-i18n="kb.col_actions">${escHtml(t('kb.col_actions'))}</th>
       </tr></thead><tbody>`;
 
@@ -177,7 +177,7 @@ export async function uploadKBDocument() {
       input.value = '';
       loadKnowledgeBase();
     } else {
-      const msg = data.error || data.description || data.message || 'Upload failed';
+      const msg = data.error || data.description || data.message || t('kb.upload_failed');
       if (statusEl) {
         statusEl.textContent = t('kb.upload_error').replace('{error}', msg);
         statusEl.className = 'kb-upload-status text-danger';
@@ -529,7 +529,7 @@ window.uploadTemplate = async function() {
     const res = await fetch('/api/templates', { method: 'POST', body: formData });
     const data = await res.json();
     if (!res.ok) {
-      if (statusEl) statusEl.textContent = data.error || data.description || 'Upload failed';
+      if (statusEl) statusEl.textContent = data.error || data.description || t('kb.upload_failed');
       return;
     }
     if (statusEl) statusEl.textContent = t('reuse.template_saved');
@@ -540,7 +540,7 @@ window.uploadTemplate = async function() {
     document.getElementById('tpl-upload-default').checked = false;
     await loadTemplates();
   } catch (err) {
-    if (statusEl) statusEl.textContent = 'Upload failed: ' + err.message;
+    if (statusEl) statusEl.textContent = t('kb.upload_failed') + ': ' + err.message;
   }
 };
 

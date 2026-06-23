@@ -190,6 +190,8 @@ class TestFR077LLMConfigUI:
         assert 'value="openai"' in html
         assert 'value="google"' in html
         assert 'value="deepseek"' in html
+        assert 'value="groq"' in html
+        assert 'value="openrouter"' in html
 
     def test_llm_model_input(self, html):
         """LLM config has model input field."""

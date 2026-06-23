@@ -20,7 +20,8 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 _strings: dict = {}
-_locale: str = "en"
+_en_strings: dict = {}
+_locale: str = "pt"
 _locales_dir: Path = Path(__file__).resolve().parent.parent / "static" / "locales"
 
 
@@ -40,14 +41,15 @@ def _load_locale(locale: str) -> dict[str, object]:
 
 def set_locale(locale: str) -> None:
     """Switch the active locale. Falls back to 'en' if not found."""
-    global _strings, _locale
+    global _strings, _en_strings, _locale
+    _en_strings = _load_locale("en")
     strings = _load_locale(locale)
     if strings:
         _strings = strings
         _locale = locale
     elif locale != "en":
         logger.warning("Locale '%s' not found, falling back to 'en'", locale)
-        _strings = _load_locale("en")
+        _strings = _en_strings
         _locale = "en"
 
 
@@ -63,10 +65,21 @@ def get_available_locales() -> list[str]:
     return sorted(p.stem for p in _locales_dir.glob("*.json"))
 
 
+def _lookup(key: str, strings: dict) -> str | None:
+    parts = key.split(".")
+    val: object = strings
+    for part in parts:
+        if isinstance(val, dict) and part in val:
+            val = val[part]
+        else:
+            return None
+    return val if isinstance(val, str) else None
+
+
 def t(key: str, **params: object) -> str:
     """Translate a dot-notation key, with optional {placeholder} interpolation.
 
-    Falls back to the key itself if the translation is not found.
+    Falls back to English, then to the key itself if the translation is not found.
 
     Args:
         key: Dot-separated key, e.g. "errors.application_not_found".
@@ -75,23 +88,19 @@ def t(key: str, **params: object) -> str:
     Returns:
         Translated string, or the key if not found.
     """
-    parts = key.split(".")
-    val: object = _strings
-    for p in parts:
-        if isinstance(val, dict) and p in val:
-            val = val[p]
-        else:
-            return key  # fallback
-    if not isinstance(val, str):
+    translated = _lookup(key, _strings)
+    if translated is None and _locale != "en":
+        translated = _lookup(key, _en_strings)
+    if translated is None:
         return key
     if not params:
-        return val
+        return translated
     return re.sub(
         r"\{(\w+)\}",
         lambda m: str(params[m.group(1)]) if m.group(1) in params else m.group(0),
-        val,
+        translated,
     )
 
 
-# Auto-load English on import
-set_locale("en")
+# Auto-load Portuguese (pt-BR content in pt.json) on import
+set_locale("pt")

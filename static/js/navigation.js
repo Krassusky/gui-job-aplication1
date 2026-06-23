@@ -13,6 +13,7 @@ import { loadWorkflow } from './workflow.js';
 import { loadUpdatePanel, maybeAutoCheckUpdates } from './updates.js';
 import { loadShortcutsPanel, maybeShowShortcutsPrompt } from './shortcuts.js';
 import { initHelp, maybeStartTourOnFirstVisit } from './help.js';
+import { showNavLoading, hideNavLoading } from './loading.js';
 import { onReady } from './i18n.js';
 
 export function initNavTabs() {
@@ -36,7 +37,7 @@ export function initNavTabs() {
   });
 }
 
-export function switchScreen(name) {
+export async function switchScreen(name) {
   state.currentScreen = name;
   document.querySelectorAll('#navbar .nav-tabs a[role="tab"]').forEach(a => {
     const isActive = a.dataset.screen === name;
@@ -48,15 +49,28 @@ export function switchScreen(name) {
   const el = document.getElementById('screen-' + name);
   if (el) el.classList.remove('hidden');
 
-  // Load data for the screen
-  if (name === 'workflow') loadWorkflow();
-  if (name === 'dashboard') { loadFeedHistory(); loadApplyMode(); loadDefaultResume(); }
-  if (name === 'applications') loadApplications();
-  if (name === 'profile') loadProfileFiles();
-  if (name === 'analytics') loadAnalytics();
-  if (name === 'resumes') loadResumes();
-  if (name === 'knowledge-base') loadKnowledgeBase();
-  if (name === 'settings') { loadSettings(); loadShortcutsPanel(); loadUpdatePanel(); }
+  const loaders = [];
+  if (name === 'workflow') loaders.push(loadWorkflow());
+  if (name === 'dashboard') {
+    loaders.push(loadFeedHistory(), loadApplyMode(), loadDefaultResume());
+  }
+  if (name === 'applications') loaders.push(loadApplications());
+  if (name === 'profile') loaders.push(loadProfileFiles());
+  if (name === 'analytics') loaders.push(loadAnalytics());
+  if (name === 'resumes') loaders.push(loadResumes());
+  if (name === 'knowledge-base') loaders.push(loadKnowledgeBase());
+  if (name === 'settings') {
+    loaders.push(loadSettings(), loadShortcutsPanel(), loadUpdatePanel());
+  }
+
+  if (loaders.length) {
+    showNavLoading();
+    try {
+      await Promise.allSettled(loaders);
+    } finally {
+      hideNavLoading();
+    }
+  }
 }
 
 export function showApp() {

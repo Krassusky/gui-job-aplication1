@@ -14,6 +14,15 @@ import pytest
 from db.database import Database
 
 
+@pytest.fixture(autouse=True)
+def _locale_en():
+    from core.i18n import set_locale
+
+    set_locale("en")
+    yield
+    set_locale("pt")
+
+
 @pytest.fixture
 def app_client(tmp_path, monkeypatch):
     """Yield (test_client, tmp_path) with paths redirected to tmp_path."""
@@ -87,9 +96,10 @@ class TestLoginOpen:
         assert rv.status_code == 500
         assert "Chrome not found" in rv.get_json()["error"]
 
+    @patch("routes.login._profile_chrome_running", return_value=False)
     @patch("routes.login.subprocess.Popen")
     @patch("routes.login._find_system_chrome", return_value="C:/chrome.exe")
-    def test_valid_linkedin_url_returns_opening(self, _chrome, mock_popen, app_client):
+    def test_valid_linkedin_url_returns_opening(self, _chrome, mock_popen, _profile, app_client):
         client, _ = app_client
         mock_popen.return_value = MagicMock(pid=1234)
         rv = client.post(
@@ -99,10 +109,14 @@ class TestLoginOpen:
         assert rv.status_code == 200
         assert rv.get_json()["status"] == "opening"
         mock_popen.assert_called_once()
+        args = mock_popen.call_args[0][0]
+        assert "--remote-debugging-port=0" in args
+        assert "--new-window" not in args
 
+    @patch("routes.login._profile_chrome_running", return_value=False)
     @patch("routes.login.subprocess.Popen")
     @patch("routes.login._find_system_chrome", return_value="C:/chrome.exe")
-    def test_valid_indeed_url_returns_opening(self, _chrome, mock_popen, app_client):
+    def test_valid_indeed_url_returns_opening(self, _chrome, mock_popen, _profile, app_client):
         client, _ = app_client
         mock_popen.return_value = MagicMock(pid=1234)
         rv = client.post(
@@ -112,24 +126,28 @@ class TestLoginOpen:
         assert rv.status_code == 200
         assert rv.get_json()["status"] == "opening"
 
+    @patch("routes.login._cdp_reachable", return_value=True)
+    @patch("routes.login._get_cdp_port", return_value=9222)
     @patch("routes.login.subprocess.Popen")
     @patch("routes.login._find_system_chrome", return_value="C:/chrome.exe")
-    def test_already_open_terminates_old(self, _chrome, mock_popen, app_client, monkeypatch):
-        """If a browser is already open, it terminates the old process."""
+    def test_already_open_reuses_browser(self, _chrome, mock_popen, _port, _cdp, app_client, monkeypatch):
+        """If a browser is already open, navigate without terminating."""
         client, _ = app_client
-        import app as app_module
-
         fake_proc = MagicMock()
-        monkeypatch.setattr(app_module, "_login_proc", fake_proc)
+        fake_proc.poll.return_value = None
         monkeypatch.setattr("app_state.login_proc", fake_proc)
 
         mock_popen.return_value = MagicMock(pid=5678)
         rv = client.post(
             "/api/login/open",
-            json={"url": "https://www.linkedin.com/login"},
+            json={"url": "https://secure.indeed.com/auth"},
         )
         assert rv.status_code == 200
-        fake_proc.terminate.assert_called_once()
+        assert rv.get_json()["status"] == "navigated"
+        fake_proc.terminate.assert_not_called()
+        mock_popen.assert_called_once()
+        args = mock_popen.call_args[0][0]
+        assert "--new-window" not in args
 
 
 class TestLoginClose:
@@ -146,6 +164,7 @@ class TestLoginClose:
         import app as app_module
 
         fake_proc = MagicMock()
+        fake_proc.poll.return_value = None
         monkeypatch.setattr(app_module, "_login_proc", fake_proc)
         monkeypatch.setattr("app_state.login_proc", fake_proc)
         rv = client.post("/api/login/close")
@@ -238,26 +257,30 @@ class TestLoginFindSystemChrome:
 class TestLoginOpenErrors:
     """Error paths in POST /api/login/open."""
 
+    @patch("routes.login._profile_chrome_running", return_value=False)
     @patch("routes.login.subprocess.Popen", side_effect=OSError("Permission denied"))
     @patch("routes.login._find_system_chrome", return_value="C:/chrome.exe")
-    def test_popen_failure_returns_500(self, _chrome, _popen, app_client):
+    def test_popen_failure_returns_500(self, _chrome, _popen, _profile, app_client):
         client, _ = app_client
         rv = client.post("/api/login/open", json={"url": "https://www.linkedin.com/login"})
         assert rv.status_code == 500
         assert "Failed to open Chrome" in rv.get_json()["error"]
 
+    @patch("routes.login._profile_chrome_running", return_value=False)
     @patch("routes.login.subprocess.Popen")
     @patch("routes.login._find_system_chrome", return_value="C:/chrome.exe")
-    def test_terminate_old_proc_exception_handled(self, _chrome, mock_popen, app_client, monkeypatch):
-        """Exception during terminate of old login proc is caught."""
+    def test_stale_proc_clears_before_open(self, _chrome, mock_popen, _profile, app_client, monkeypatch):
+        """Exited login proc is cleared and a fresh browser is opened."""
         client, _ = app_client
         old_proc = MagicMock()
-        old_proc.terminate.side_effect = OSError("process gone")
+        old_proc.poll.return_value = 0
         monkeypatch.setattr("app_state.login_proc", old_proc)
 
         mock_popen.return_value = MagicMock(pid=999)
         rv = client.post("/api/login/open", json={"url": "https://www.linkedin.com/login"})
         assert rv.status_code == 200
+        assert rv.get_json()["status"] == "opening"
+        old_proc.terminate.assert_not_called()
 
 
 # ===================================================================
@@ -271,6 +294,7 @@ class TestLoginCloseErrors:
     def test_close_terminate_exception_handled(self, app_client, monkeypatch):
         client, _ = app_client
         fake_proc = MagicMock()
+        fake_proc.poll.return_value = None
         fake_proc.terminate.side_effect = OSError("already dead")
         monkeypatch.setattr("app_state.login_proc", fake_proc)
         rv = client.post("/api/login/close")
@@ -339,3 +363,18 @@ class TestLoginSessions:
         data = rv.get_json()
         assert data["linkedin"] is False
         assert data["indeed"] is False
+
+    @patch("routes.login._sessions_via_cdp")
+    def test_cdp_fallback_when_cookie_db_unreadable(self, mock_cdp, app_client, tmp_path):
+        """Use CDP cookies when the on-disk Cookies DB cannot be read."""
+        client, data_dir = app_client
+        mock_cdp.return_value = {"linkedin": True, "indeed": False}
+
+        cookies_dir = data_dir / "browser_profile" / "Default" / "Network"
+        cookies_dir.mkdir(parents=True)
+        (cookies_dir / "Cookies").write_bytes(b"locked")
+
+        rv = client.get("/api/login/sessions")
+        assert rv.status_code == 200
+        assert rv.get_json()["linkedin"] is True
+        mock_cdp.assert_called_once()

@@ -6,11 +6,22 @@ import { escHtml } from './helpers.js';
 import { showApp } from './navigation.js';
 import { checkLoginSessions, closeLoginBrowser } from './login.js';
 import { t } from './i18n.js';
+import {
+  populateFormFromExtracted,
+  fetchCvImport,
+  fetchLinkedInImport,
+  fetchLinkedInZipImport,
+  setImportStatus,
+} from './profile-import.js';
 
 export function showWizard(setupData) {
   document.getElementById('wizard-overlay').classList.remove('hidden');
   document.getElementById('navbar').classList.add('hidden');
   document.getElementById('app-screens').classList.add('hidden');
+
+  state.aiAvailable = !!(setupData && setupData.ai_available);
+  state.wizardData.imported_experience_text = null;
+  state.wizardData.llm = null;
 
   // AI status badge
   const badge = document.getElementById('wizard-ai-status');
@@ -51,7 +62,160 @@ export function setWizardStep(n) {
   // Build summary on last step
   if (n === 6) buildWizardSummary();
   // Check login sessions when entering Platform Login step
-  if (n === 5) checkLoginSessions();
+  if (n === 1) checkLoginSessions();
+  // Refresh import hint when entering profile step
+  if (n === 3) _updateWizardImportHint();
+}
+
+function _updateWizardImportHint() {
+  const hint = document.getElementById('wizard-import-ai-hint');
+  if (!hint) return;
+  hint.textContent = state.aiAvailable
+    ? t('wizard.import_ai_ready')
+    : t('wizard.import_ai_required');
+}
+
+function _applyWizardExtracted(extracted) {
+  const expText = populateFormFromExtracted(extracted, 'wiz');
+  if (expText) {
+    state.wizardData.imported_experience_text = expText;
+  }
+}
+
+export async function wizardImportFromCV(input) {
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+
+  if (!state.aiAvailable) {
+    setImportStatus('wizard-import-status', t('wizard.import_ai_required'), true);
+    return;
+  }
+
+  setImportStatus('wizard-import-status', t('settings.importing'));
+  try {
+    const data = await fetchCvImport(file, state.wizardData.llm);
+    _applyWizardExtracted(data.extracted);
+    setImportStatus('wizard-import-status', t('wizard.import_applied_short'));
+    await wizardRefreshFiles();
+  } catch (e) {
+    setImportStatus('wizard-import-status', e.message || t('settings.import_failed'), true);
+  }
+}
+
+export async function wizardImportFromLinkedIn() {
+  if (!state.aiAvailable) {
+    setImportStatus('wizard-import-status', t('wizard.import_ai_required'), true);
+    return;
+  }
+
+  const btn = document.getElementById('wizard-btn-import-linkedin');
+  if (btn) { btn.disabled = true; btn.textContent = t('settings.importing'); }
+  setImportStatus('wizard-import-status', t('settings.linkedin_importing'));
+
+  try {
+    const data = await fetchLinkedInImport(state.wizardData.llm);
+    _applyWizardExtracted(data.extracted);
+    setImportStatus('wizard-import-status', t('wizard.import_applied_short'));
+    await wizardRefreshFiles();
+  } catch (e) {
+    setImportStatus('wizard-import-status', e.message || t('settings.import_failed'), true);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = t('settings.import_from_linkedin'); }
+  }
+}
+
+export async function wizardImportLinkedInZip(input) {
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+
+  if (!state.aiAvailable) {
+    setImportStatus('wizard-import-status', t('wizard.import_ai_required'), true);
+    return;
+  }
+
+  setImportStatus('wizard-import-status', t('settings.importing'));
+  try {
+    const data = await fetchLinkedInZipImport(file, state.wizardData.llm);
+    _applyWizardExtracted(data.extracted);
+    setImportStatus('wizard-import-status', t('wizard.import_applied_short'));
+    await wizardRefreshFiles();
+  } catch (e) {
+    setImportStatus('wizard-import-status', e.message || t('settings.import_failed'), true);
+  }
+}
+
+/** Auto-fill wizard from a resume file (used on fallback resume step). */
+export async function wizardAutoFillFromResume(file) {
+  if (!state.aiAvailable || !file) return;
+  setImportStatus('wizard-resume-import-status', t('wizard.resume_autofill'));
+  try {
+    const data = await fetchCvImport(file, state.wizardData.llm);
+    _applyWizardExtracted(data.extracted);
+    setImportStatus('wizard-resume-import-status', t('wizard.resume_autofill_done'));
+  } catch (e) {
+    setImportStatus('wizard-resume-import-status', e.message || t('settings.import_failed'), true);
+  }
+}
+
+const WIZARD_LLM_DEFAULTS = {
+  google: 'gemini-2.0-flash',
+  groq: 'llama-3.3-70b-versatile',
+  openrouter: 'meta-llama/llama-3.3-70b-instruct:free',
+  anthropic: 'claude-sonnet-4-20250514',
+  openai: 'gpt-4o',
+  deepseek: 'deepseek-chat',
+};
+
+export async function wizardValidateLLMKey() {
+  const provider = document.getElementById('wiz-llm-provider')?.value;
+  const apiKey = document.getElementById('wiz-llm-api-key')?.value;
+  const status = document.getElementById('wizard-llm-key-status');
+  const btn = document.getElementById('btn-wizard-validate-key');
+
+  if (!provider) {
+    if (status) { status.textContent = t('settings.select_provider'); status.style.color = '#f87171'; }
+    return;
+  }
+  if (!apiKey) {
+    if (status) { status.textContent = t('settings.enter_api_key'); status.style.color = '#f87171'; }
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = t('settings.validating'); }
+  if (status) status.textContent = '';
+
+  const model = WIZARD_LLM_DEFAULTS[provider] || '';
+  try {
+    const res = await fetch('/api/ai/validate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider, api_key: apiKey, model }),
+    });
+    const data = await res.json();
+    if (data.valid) {
+      state.wizardData.llm = { provider, api_key: apiKey, model };
+      state.aiAvailable = true;
+      _updateWizardImportHint();
+      if (status) {
+        status.textContent = data.message || t('settings.key_valid');
+        status.style.color = '#34d399';
+      }
+    } else {
+      if (status) {
+        status.textContent = data.message || t('settings.key_invalid');
+        status.style.color = '#f87171';
+      }
+    }
+  } catch {
+    if (status) {
+      status.textContent = t('settings.validation_failed');
+      status.style.color = '#f87171';
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = t('button.validate'); }
+  }
 }
 
 export function wizardNext() {
@@ -143,6 +307,10 @@ export async function wizardFinish() {
     },
   };
 
+  if (state.wizardData.llm) {
+    config.llm = state.wizardData.llm;
+  }
+
   try {
     await fetch('/api/config', {
       method: 'PUT',
@@ -158,9 +326,25 @@ export async function wizardFinish() {
     try {
       const fd = new FormData();
       fd.append('file', state.wizardData.resume_file);
-      await fetch('/api/profile/resume', { method: 'POST', body: fd });
+      await fetch('/api/config/default-resume', { method: 'POST', body: fd });
     } catch (e) {
       console.warn('Could not upload resume:', e);
+    }
+  }
+
+  // Save imported experience text as an experience file
+  if (state.wizardData.imported_experience_text) {
+    try {
+      await fetch('/api/profile/experiences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: 'imported_profile.txt',
+          content: state.wizardData.imported_experience_text,
+        }),
+      });
+    } catch (e) {
+      console.warn('Could not save imported experience file:', e);
     }
   }
 

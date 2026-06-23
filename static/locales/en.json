@@ -4,7 +4,16 @@
     "page_title": "AutoApply — Smart Job Application Dashboard",
     "skip_to_content": "Skip to main content"
   },
-
+  "loading": {
+    "app_boot": "Starting AutoApply...",
+    "please_wait": "Please wait...",
+    "loading_screen": "Loading...",
+    "starting_bot": "Starting bot...",
+    "pausing_bot": "Pausing bot...",
+    "stopping_bot": "Stopping bot... This may take a moment.",
+    "opening_browser": "Opening browser...",
+    "saving_settings": "Saving settings..."
+  },
   "nav": {
     "workflow": "Guide",
     "dashboard": "Dashboard",
@@ -13,12 +22,13 @@
     "settings": "Settings",
     "analytics": "Analytics",
     "resumes": "Resume Library",
-    "knowledge_base": "Knowledge Base"
+    "knowledge_base": "Application Data",
+    "knowledge_base_hint": "Stored experience, screening answers & documents for tailored applications"
   },
-
   "wizard": {
     "welcome_title": "Welcome to AutoApply",
     "welcome_subtitle": "AutoApply automates your job search by scanning platforms, matching opportunities to your profile, generating tailored resumes and cover letters, and applying on your behalf. Let's get you set up in a few quick steps.",
+    "welcome_cv_tip": "Tip: on the Profile step you can upload your CV to auto-fill your information in seconds.",
     "ai_checking": "Checking AI provider...",
     "ai_configured": "AI provider configured",
     "ai_not_configured": "No AI provider — configure in Settings after setup",
@@ -72,9 +82,16 @@
     "skip": "Skip",
     "experience_level": "Experience Level",
     "resume_upload_aria": "Upload resume file. Click or drag and drop. PDF or DOCX, max 5MB",
-    "platform_login_subtitle": "AutoApply opens a browser window where you can log into your accounts. Your sessions are saved so you only need to do this once."
+    "platform_login_subtitle": "AutoApply opens a browser window where you can log into your accounts. Your sessions are saved so you only need to do this once.",
+    "import_title": "Quick fill — save time",
+    "import_ai_ready": "Upload your CV or import from LinkedIn to auto-fill the fields below.",
+    "import_ai_required": "Configure an AI provider below to use auto-fill. You can still enter your profile manually.",
+    "ai_setup_summary": "Configure AI provider (enables auto-fill)",
+    "import_applied_short": "Profile fields updated. Review and edit anything below, then click Next.",
+    "resume_autofill_hint": "If an AI provider is configured, uploading here also auto-fills your profile and job preferences.",
+    "resume_autofill": "Reading your resume to fill profile fields…",
+    "resume_autofill_done": "Profile and preferences updated from your resume."
   },
-
   "form": {
     "first_name": "First Name",
     "last_name": "Last Name",
@@ -129,7 +146,6 @@
     "filename": "Filename",
     "content": "Content"
   },
-
   "placeholder": {
     "first_name": "Jane",
     "last_name": "Doe",
@@ -163,7 +179,6 @@
     "file_content": "Enter your experience details...",
     "years_exp": "e.g. 5"
   },
-
   "button": {
     "start": "Start",
     "pause": "Pause",
@@ -190,14 +205,12 @@
     "approve_and_apply": "Approve & Apply",
     "upload": "Upload"
   },
-
   "bot": {
     "running": "Running",
     "paused": "Paused",
     "stopped": "Stopped",
     "uptime_default": "--:--"
   },
-
   "ai": {
     "connected": "AI Connected",
     "not_configured": "AI (not configured)",
@@ -205,7 +218,6 @@
     "warning_body": "The bot will use basic templates instead of AI-generated resumes. Configure in",
     "warning_link": "Settings → AI Provider"
   },
-
   "applications": {
     "no_results": "No applications found.",
     "load_error": "Could not load applications.",
@@ -245,7 +257,6 @@
     "col_notes": "Notes",
     "notes_placeholder": "Add notes about this application..."
   },
-
   "profile": {
     "edit_file": "Edit File",
     "new_file": "New Experience File",
@@ -258,14 +269,39 @@
     "screen_title": "Experience Files",
     "loading": "Loading files..."
   },
-
   "settings": {
     "select_provider": "Select a provider first",
     "enter_api_key": "Enter an API key",
     "validating": "Validating...",
     "key_valid": "API key is valid",
     "key_invalid": "Invalid API key or provider error",
+    "key_insufficient_balance": "API key is recognized but your account has insufficient balance. Add credits to your provider account.",
     "validation_failed": "Validation failed — check your connection",
+    "add_provider": "Add Provider",
+    "update_provider": "Update Provider",
+    "provider_added": "Provider added. Click Save Settings to keep all changes.",
+    "no_providers_yet": "No AI providers saved yet. Fill in the form below and click Add Provider.",
+    "active_provider": "Active",
+    "use_provider": "Use",
+    "label_provider_name": "Provider name",
+    "provider_name_placeholder": "e.g. DeepSeek main",
+    "ai_provider_default_label": "AI Provider",
+    "profile_import_title": "Quick fill from CV or LinkedIn",
+    "profile_import_hint": "Upload your CV or import from LinkedIn to auto-fill name, contact info, bio, job titles, and skills. Requires a configured AI provider.",
+    "import_from_cv": "Import from CV",
+    "import_from_linkedin": "Import from LinkedIn",
+    "import_linkedin_zip": "LinkedIn export ZIP",
+    "apply_import": "Apply to profile",
+    "importing": "Analyzing document…",
+    "linkedin_importing": "Reading LinkedIn profile (log in via Platform Login first)…",
+    "import_ready": "Review the preview below, then click Apply to profile.",
+    "import_applied": "Profile updated. Click Save Settings to keep changes.",
+    "import_applied_with_file": "Profile updated and experience file saved as {file}. Click Save Settings.",
+    "import_failed": "Import failed. Check your AI provider and try again.",
+    "import_nothing_pending": "No import data to apply. Run Import from LinkedIn or CV first.",
+    "applying_import": "Applying…",
+    "preview_job_titles": "Job titles",
+    "preview_skills": "Skills",
     "save_error": "Error saving settings.",
     "saved": "Saved!",
     "screen_title": "Settings",
@@ -291,6 +327,7 @@
     "app_answers_hint": "Pre-fill answers for common application questions. Used by Workday, Ashby, and other ATS portals.",
     "section_platform_login": "Platform Login",
     "platform_login_hint": "Open a browser to log into your job platforms. Sessions are saved across restarts.",
+    "platform_login_tip": "Tip: keep Chrome open briefly after logging in so your session saves correctly.",
     "open_linkedin_login": "Open LinkedIn Login",
     "open_indeed_login": "Open Indeed Login",
     "section_automation": "Automation Options",
@@ -315,9 +352,9 @@
     "section_updates": "Updates",
     "updates_help": "Check for new versions published on GitHub and install them without leaving the app.",
     "section_shortcuts": "Desktop shortcuts",
-    "shortcuts_help": "Create a Desktop icon and Start Menu entry so you can launch the app like any other program."
+    "shortcuts_help": "Create a Desktop icon and Start Menu entry so you can launch the app like any other program.",
+    "upload_failed": "Upload failed"
   },
-
   "shortcuts": {
     "create": "Create desktop shortcut",
     "recreate": "Recreate shortcuts",
@@ -335,7 +372,6 @@
     "prompt_body_win": "Create a Desktop and Start Menu shortcut so you can launch Job Apply Assistant with one click.",
     "prompt_body_mac": "Add Job Apply Assistant to Applications and create a Desktop shortcut for quick access."
   },
-
   "updates": {
     "current_version": "Current version:",
     "check": "Check for updates",
@@ -358,14 +394,12 @@
     "dismiss": "Not now",
     "preparing": "Preparing update..."
   },
-
   "login": {
     "open_error": "Failed to open browser",
     "connection_error": "Could not connect to server.",
     "connected": "Connected",
     "not_connected": "Not connected"
   },
-
   "review": {
     "unknown": "Unknown",
     "at": "at",
@@ -373,11 +407,9 @@
     "cover_letter_heading": "Cover Letter",
     "edit_and_apply": "Edit & Apply"
   },
-
   "feed": {
     "empty": "No activity yet. Start the bot to begin."
   },
-
   "analytics": {
     "applications_label": "Applications",
     "screen_title": "Analytics",
@@ -425,7 +457,6 @@
     "empty_state": "No application data yet. Start the bot to begin tracking analytics.",
     "error_loading": "Could not load analytics data."
   },
-
   "status": {
     "applied": "Applied",
     "interview": "Interview",
@@ -435,7 +466,6 @@
     "error": "Error",
     "manual_required": "Manual Required"
   },
-
   "schedule": {
     "enabled": "Enabled",
     "days_of_week": "Days of Week",
@@ -451,7 +481,6 @@
     "enable_schedule": "Enable Schedule",
     "active": "Active"
   },
-
   "experience_levels": {
     "entry": "Entry Level",
     "mid": "Mid Level",
@@ -463,7 +492,6 @@
     "mid_short": "Mid",
     "lead_short": "Lead"
   },
-
   "errors": {
     "unauthorized": "Unauthorized",
     "too_many_requests": "Too many requests",
@@ -481,6 +509,7 @@
     "description_not_found": "Job description not found",
     "bot_already_running": "Bot is already running",
     "config_not_found": "Configuration not found. Complete setup first.",
+    "request_failed": "Request failed. Please try again.",
     "no_review_pending": "No application awaiting review",
     "cover_letter_required": "cover_letter is required",
     "invalid_days": "Invalid days: {days}",
@@ -502,9 +531,14 @@
     "template_not_found": "Template not found",
     "pdflatex_not_found": "pdflatex not found — LaTeX compilation unavailable",
     "compilation_failed": "LaTeX compilation failed",
-    "invalid_request": "Invalid request"
+    "invalid_request": "Invalid request",
+    "ai_required_for_import": "Configure an AI provider in Settings before importing profile data.",
+    "no_file_provided": "No file provided",
+    "unsupported_import_format": "Unsupported format. Use PDF, DOCX, TXT, or MD.",
+    "file_too_large": "File too large",
+    "linkedin_zip_required": "Upload a LinkedIn data export ZIP file",
+    "extracted_data_required": "extracted data is required"
   },
-
   "dashboard": {
     "stat_found": "Found",
     "stat_applied": "Applied",
@@ -517,9 +551,10 @@
     "activity_feed": "Activity Feed",
     "ai_warning": "No AI provider configured — using fallback templates. Add an API key in",
     "ai_warning_link": "Settings → AI Provider",
-    "ai_warning_suffix": "for tailored resumes and cover letters."
+    "ai_warning_suffix": "for tailored resumes and cover letters.",
+    "stat_skipped": "Skipped",
+    "mode_hint": "Full Auto applies without stopping. Review lets you approve each job. Watch only finds jobs — no applications."
   },
-
   "eeo": {
     "gender_male": "Male",
     "gender_female": "Female",
@@ -538,7 +573,6 @@
     "disability_no": "No, I don't have a disability",
     "disability_decline": "I don't wish to answer"
   },
-
   "modal": {
     "close_aria": "Close dialog",
     "cover_letter_title": "Cover Letter",
@@ -553,11 +587,9 @@
     "confirm_delete_title": "Delete File?",
     "confirm_delete_desc": "This action cannot be undone."
   },
-
   "file_upload": {
     "click_to_change": "Click to change"
   },
-
   "resumes": {
     "title": "Resume Library",
     "search_placeholder": "Search by company or job title...",
@@ -606,9 +638,8 @@
     "diff_unchanged": "Unchanged",
     "diff_legend": "Diff Legend"
   },
-
   "kb": {
-    "title": "Knowledge Base",
+    "title": "Application Data",
     "upload_title": "Upload Documents",
     "upload_desc": "Upload resumes, project descriptions, LinkedIn exports — the more, the better!",
     "upload_drop": "Drop files here or click to browse",
@@ -643,9 +674,13 @@
     "category_summary": "Summary",
     "category_certification": "Certifications",
     "category_award": "Awards",
-    "category_volunteer": "Volunteer"
+    "category_volunteer": "Volunteer",
+    "subtitle": "Your personal library of experience, skills, and application answers. Upload documents or add entries — the AI uses only this data to tailor resumes and fill forms.",
+    "nav_help": "Experience, Q&A & documents used to personalize each application",
+    "documents_title": "Uploaded Documents",
+    "search_placeholder": "Search entries...",
+    "upload_failed": "Upload failed"
   },
-
   "reuse": {
     "settings_title": "Smart Resume Assembly",
     "enabled": "Enable Knowledge Base resume assembly",
@@ -670,9 +705,12 @@
     "builtin_badge": "Built-in",
     "no_custom_templates": "No custom templates yet. Upload a .tex file to get started.",
     "template_saved": "Template saved successfully",
-    "template_deleted": "Template deleted"
+    "template_deleted": "Template deleted",
+    "generate_hint": "AI generates a tailored resume using only your Knowledge Base data. No information is invented.",
+    "job_description_label": "Job Description",
+    "job_description_placeholder": "Paste a job description to generate a tailored resume...",
+    "generate_btn": "Generate Resume"
   },
-
   "builder": {
     "title": "Resume Builder",
     "desc": "Drag and drop KB entries to manually build a custom resume.",
@@ -701,7 +739,6 @@
     "generating": "Generating PDF preview...",
     "preview_error": "Preview generation failed"
   },
-
   "ats": {
     "title": "ATS Compatibility Score",
     "score_label": "ATS Score",
@@ -720,7 +757,9 @@
     "categories_present": "Sections Present",
     "categories_missing": "Sections Missing",
     "no_gaps": "No gaps found — excellent match!",
-    "analyzing": "Analyzing ATS compatibility..."
+    "analyzing": "Analyzing ATS compatibility...",
+    "job_description_label": "Job Description",
+    "job_description_placeholder": "Paste a job description..."
   },
   "portal_auth": {
     "missing_fields": "Domain, username, and password are required.",
@@ -747,7 +786,6 @@
     "skip_button": "Skip This Job",
     "unknown": "Unknown portal"
   },
-
   "workflow": {
     "title": "Step-by-step guide",
     "subtitle": "Follow these steps in order. You can go back anytime.",
@@ -758,11 +796,11 @@
     "step5_short": "References",
     "step6_short": "Apply",
     "step1_title": "1. Prepare your profile",
-    "step1_desc": "Fill in your details, upload your resume (PDF), and add experience files.",
+    "step1_desc": "Log into LinkedIn and Indeed first, then fill in your details, upload your resume (PDF), and add experience files.",
     "step2_title": "2. Find aligned jobs",
     "step2_desc": "AI analyzes your profile and suggests roles, keywords, and improvements. No AI? Use the Claude Chrome extension prompt.",
-    "step3_title": "3. Configure search & LinkedIn",
-    "step3_desc": "Apply analysis suggestions and log into LinkedIn once.",
+    "step3_title": "3. Configure search",
+    "step3_desc": "Apply analysis suggestions to your job search settings.",
     "step4_title": "4. Find recruiters",
     "step4_desc": "Expand networking: identify recruiters in your field and connection messages.",
     "step5_title": "5. Reference profiles",
@@ -780,6 +818,7 @@
     "run_references": "Generate profile guide",
     "apply_suggestions": "Apply suggestions to search",
     "linkedin_login": "Open LinkedIn login",
+    "indeed_login": "Open Indeed login",
     "go_dashboard": "Go to Dashboard",
     "analyzing": "Analyzing...",
     "analysis_error": "Analysis failed. Check your AI settings or use the manual prompt.",
@@ -797,9 +836,9 @@
     "check_profile": "Profile filled in",
     "check_cv": "Resume uploaded",
     "check_experience": "Experience files added",
-    "check_languages": "Languages configured (PT / EN / ES)"
+    "check_languages": "Languages configured (PT / EN / ES)",
+    "check_ai": "AI provider configured (optional)"
   },
-
   "help": {
     "nav_help": "Help",
     "nav_tour": "Tour",
@@ -840,6 +879,8 @@
     "faq11_a": "Close other JobApply Assistant windows. If it persists, delete `.lock` in `C:\\Users\\YourName\\.autoapply\\` and reopen.",
     "faq12_q": "Do I need Google Chrome?",
     "faq12_a": "Yes. The app uses Chrome to search jobs and apply on LinkedIn. Install the latest version before use.",
+    "faq13_q": "Should I keep the login browser open?",
+    "faq13_a": "Yes — after logging in on LinkedIn or Indeed, keep Chrome open until the app shows **Connected**. Your session is saved so you only need to do this once per platform.",
     "tour_skip": "Skip tour",
     "tour_back": "Back",
     "tour_next": "Next",
