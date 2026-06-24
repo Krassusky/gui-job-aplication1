@@ -12,7 +12,7 @@ import logging
 import sys
 import threading
 import time
-from typing import Any
+from typing import Any, Callable
 
 import requests
 
@@ -146,14 +146,18 @@ def _shutdown(host: str, port: int) -> None:
     logger.info("Shell shutdown complete")
 
 
-def _start_webview_with_retry(webview_module: Any, attempts: int = 3) -> None:
+def _start_webview_with_retry(
+    webview_module: Any,
+    func: Callable[[], None] | None = None,
+    attempts: int = 3,
+) -> None:
     """Start pywebview on Windows with short retries for cold CLR startup."""
     from shell.win_motw import strip_download_zone_identifiers
 
     last_error: Exception | None = None
     for attempt in range(1, attempts + 1):
         try:
-            webview_module.start()
+            webview_module.start(func)
             return
         except RuntimeError as exc:
             last_error = exc
@@ -258,21 +262,20 @@ def launch_gui(host: str = "127.0.0.1", port: int = 5000) -> None:
             )
             window.load_html(error_html)
 
-    # 4. System tray
+    # 4. System tray (macOS uses run_detached; must follow window creation)
+    if sys.platform == "darwin":
+        from webview.guilib import initialize
+
+        initialize()
     create_tray(on_show=_on_show, on_quit=_on_quit)
 
-    # 5. Start health check in background thread
-    health_thread = threading.Thread(
-        target=_on_loaded, daemon=True, name="health-check",
-    )
-    health_thread.start()
-
-    # 6. Run PyWebView event loop (blocks until window is destroyed)
+    # 5. Run PyWebView event loop (blocks until window is destroyed).
+    #    Flask health polling runs via start(func=...) after the GUI loop begins.
     try:
         if sys.platform == "win32":
-            _start_webview_with_retry(webview)
+            _start_webview_with_retry(webview, func=_on_loaded)
         else:
-            webview.start()
+            webview.start(_on_loaded)
     finally:
         if not _app_state["quitting"]:
             _quit_app()
