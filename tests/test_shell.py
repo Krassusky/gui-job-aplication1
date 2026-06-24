@@ -156,7 +156,7 @@ class TestSystemTray:
 
     @patch("shell.tray.pystray", create=True)
     def test_create_tray_starts_thread(self, mock_pystray):
-        """create_tray starts the tray in a background thread."""
+        """create_tray starts the tray in a background thread on non-macOS."""
         import shell.tray
 
         # Reset global state
@@ -171,7 +171,11 @@ class TestSystemTray:
         on_show = MagicMock()
         on_quit = MagicMock()
 
-        with patch("shell.tray._get_icon_image") as mock_icon_img:
+        with (
+            patch("shell.tray._get_icon_image") as mock_icon_img,
+            patch("shell.tray.sys.platform", "win32"),
+            patch.dict("sys.modules", {"pystray": mock_pystray}),
+        ):
             from PIL import Image
 
             mock_icon_img.return_value = Image.new("RGBA", (64, 64))
@@ -180,8 +184,46 @@ class TestSystemTray:
 
         assert shell.tray._tray_instance is not None
         assert shell.tray._tray_thread is not None
+        mock_icon.run.assert_called_once()
+        mock_icon.run_detached.assert_not_called()
 
         # Cleanup
+        shell.tray.destroy_tray()
+
+    @patch("shell.tray.pystray", create=True)
+    def test_create_tray_uses_run_detached_on_macos(self, mock_pystray):
+        """create_tray shares the NSApplication run loop on macOS."""
+        import shell.tray
+
+        shell.tray._tray_instance = None
+        shell.tray._tray_thread = None
+
+        mock_icon = MagicMock()
+        mock_pystray.Icon.return_value = mock_icon
+        mock_pystray.Menu = MagicMock()
+        mock_pystray.MenuItem = MagicMock()
+
+        on_show = MagicMock()
+        on_quit = MagicMock()
+
+        with (
+            patch("shell.tray._get_icon_image") as mock_icon_img,
+            patch("shell.tray.sys.platform", "darwin"),
+            patch.dict("sys.modules", {"pystray": mock_pystray, "AppKit": MagicMock()}),
+        ):
+            from PIL import Image
+
+            mock_icon_img.return_value = Image.new("RGBA", (64, 64))
+
+            shell.tray.create_tray(on_show=on_show, on_quit=on_quit)
+
+        assert shell.tray._tray_instance is not None
+        assert shell.tray._tray_thread is None
+        mock_icon.run_detached.assert_called_once()
+        mock_icon.run.assert_not_called()
+        icon_kwargs = mock_pystray.Icon.call_args[1]
+        assert "darwin_nsapplication" in icon_kwargs
+
         shell.tray.destroy_tray()
 
     def test_destroy_tray_cleans_up(self):

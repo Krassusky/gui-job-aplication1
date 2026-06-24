@@ -9,6 +9,7 @@ Runs in a background thread to avoid blocking PyWebView.
 from __future__ import annotations
 
 import logging
+import sys
 import threading
 from pathlib import Path
 from typing import Callable
@@ -43,7 +44,12 @@ def _get_icon_image():
 
 
 def create_tray(on_show: Callable[[], None], on_quit: Callable[[], None]) -> None:
-    """Create and start the system tray icon in a background thread.
+    """Create and start the system tray icon.
+
+    On macOS, pystray must share the main-thread NSApplication run loop used by
+    pywebview. ``run_detached()`` attaches to that loop instead of starting a
+    blocking ``NSApplication.run()`` on a worker thread (which crashes on recent
+    macOS versions). On other platforms the tray runs in a background thread.
 
     Args:
         on_show: Callback when user clicks "Show" or the tray icon.
@@ -65,12 +71,27 @@ def create_tray(on_show: Callable[[], None], on_quit: Callable[[], None]) -> Non
         pystray.MenuItem("Quit", lambda _icon, _item: on_quit()),
     )
 
+    icon_kwargs: dict[str, object] = {}
+    if sys.platform == "darwin":
+        import AppKit
+
+        icon_kwargs["darwin_nsapplication"] = AppKit.NSApplication.sharedApplication()
+
     _tray_instance = pystray.Icon(
         name="AutoApply",
         icon=icon_image,
         title="AutoApply",
         menu=menu,
+        **icon_kwargs,
     )
+
+    if sys.platform == "darwin":
+        try:
+            _tray_instance.run_detached()
+            logger.info("System tray started (detached, sharing NSApplication run loop)")
+        except Exception as e:
+            logger.error("System tray error: %s", e)
+        return
 
     def _run_tray():
         try:

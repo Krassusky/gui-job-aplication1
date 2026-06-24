@@ -4,6 +4,11 @@ All notable changes to AutoApply are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.6] - 2026-06-24
+
+### Fixed
+- **macOS launch crash**: System tray now uses `pystray.run_detached()` on the main-thread `NSApplication` run loop shared with pywebview, fixing `NSUpdateCycleInitialize() is called off the main thread` on macOS 26+.
+
 ## [2.3.3] - 2026-03-12
 
 ### Fixed

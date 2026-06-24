@@ -6,13 +6,26 @@ Siga estes 3 passos na ordem:
 1) EXTRAIR
    - Dê duplo clique no arquivo .zip baixado
 
+   Pelo Terminal (substitua o caminho do .zip):
+   cd ~/Downloads
+   unzip JobApplyAssistant-*-mac-arm64.zip -d JobApplyAssistant
+   cd JobApplyAssistant
+
 2) DESBLOQUEAR (importante na primeira vez)
    - Dê duplo clique em: Desbloquear arquivos.command
    - Se o Mac perguntar, confirme que deseja abrir
 
+   Pelo Terminal (na pasta extraída — copie linha por linha):
+   xattr -dr com.apple.quarantine .
+
 3) INSTALAR
    - Dê duplo clique em: Install JobApply Assistant.command
    - O app vai para Aplicativos e um atalho aparece na Área de Trabalho
+
+   Pelo Terminal (na pasta extraída — copie linha por linha):
+   xattr -dr com.apple.quarantine JobApplyAssistant.app
+   cp -R JobApplyAssistant.app /Applications/
+   open /Applications/JobApplyAssistant.app
 
 Se o Mac bloquear na primeira abertura:
    - Clique com o botão direito em JobApplyAssistant.app → Abrir → Abrir
