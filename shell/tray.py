@@ -3,7 +3,8 @@
 Implements: FR-091 (TASK-031).
 
 Creates a system tray icon with Show/Quit context menu.
-Runs in a background thread to avoid blocking PyWebView.
+On macOS, attaches to pywebview's main-thread run loop via run_detached().
+On other platforms, runs in a background thread.
 """
 
 from __future__ import annotations

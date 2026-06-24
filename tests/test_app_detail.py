@@ -15,6 +15,15 @@ import pytest
 from db.database import Database
 
 
+@pytest.fixture(autouse=True)
+def _locale_en():
+    from core.i18n import set_locale
+
+    set_locale("en")
+    yield
+    set_locale("pt")
+
+
 def insert_app(db: Database, **kwargs) -> int:
     """Insert a test application with sensible defaults."""
     defaults = dict(
