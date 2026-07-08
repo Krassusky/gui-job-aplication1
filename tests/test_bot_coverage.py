@@ -444,7 +444,7 @@ class TestBrowserManagerEdgeCases:
         mock_context.new_page.return_value = new_page
         bm._playwright.chromium.launch_persistent_context.return_value = mock_context
 
-        with patch("bot.browser._find_system_chrome", return_value=None):
+        with patch("bot.browser.launch_persistent_context"):
             with patch.dict("sys.modules", {"playwright": MagicMock(),
                                             "playwright.sync_api": MagicMock()}):
                 result = bm.get_page()

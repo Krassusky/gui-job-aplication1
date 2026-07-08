@@ -1,4 +1,4 @@
-"""Shared helpers for the dedicated AutoApply Chrome browser profile."""
+"""Shared helpers for the dedicated AutoApply browser profile."""
 
 from __future__ import annotations
 
@@ -10,13 +10,13 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-from config.settings import get_data_dir
+from core.browser_engine import preferred_engine, profile_dir as engine_profile_dir
 
 logger = logging.getLogger(__name__)
 
 
 def profile_dir() -> Path:
-    return get_data_dir() / "browser_profile"
+    return engine_profile_dir(preferred_engine())
 
 
 def get_cdp_port(profile: Path | None = None) -> int | None:

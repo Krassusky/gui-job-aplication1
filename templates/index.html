@@ -148,7 +148,7 @@
         </details>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
           <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('wizard-cv-import-input').click()" data-i18n="settings.import_from_cv">Import from CV</button>
-          <button type="button" class="btn btn-secondary btn-sm" onclick="wizardImportFromLinkedIn()" id="wizard-btn-import-linkedin" data-i18n="settings.import_from_linkedin">Import from LinkedIn</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="wizardImportFromLinkedIn()" id="wizard-btn-import-linkedin" disabled data-i18n="settings.import_from_linkedin">Import from LinkedIn</button>
           <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('wizard-linkedin-zip-input').click()" data-i18n="settings.import_linkedin_zip">LinkedIn export ZIP</button>
         </div>
         <input type="file" id="wizard-cv-import-input" accept=".pdf,.docx,.doc,.txt,.md" style="display:none" onchange="wizardImportFromCV(this)">
@@ -1150,35 +1150,15 @@
       <div class="flex-col gap-lg">
         <h3 data-i18n="settings.section_profile">Profile</h3>
 
-        <div class="card profile-import-panel" style="margin-bottom:16px; padding:14px; background:rgba(77,166,255,.04); border:1px solid var(--border);">
-          <h4 style="margin:0 0 6px;" data-i18n="settings.profile_import_title">Quick fill from CV or LinkedIn</h4>
-          <p style="font-size:.85rem;color:var(--text-dim);margin:0 0 12px;" data-i18n="settings.profile_import_hint">
-            Upload your CV or import from LinkedIn to auto-fill name, contact info, bio, job titles, and skills. Requires a configured AI provider.
-          </p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('cv-import-input').click()" data-i18n="settings.import_from_cv">Import from CV</button>
-            <button type="button" class="btn btn-secondary btn-sm" onclick="importFromLinkedIn()" id="btn-import-linkedin" data-i18n="settings.import_from_linkedin">Import from LinkedIn</button>
-            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('linkedin-zip-input').click()" data-i18n="settings.import_linkedin_zip">LinkedIn export ZIP</button>
-          </div>
-          <input type="file" id="cv-import-input" accept=".pdf,.docx,.doc,.txt,.md" style="display:none" onchange="importFromCV(this)">
-          <input type="file" id="linkedin-zip-input" accept=".zip" style="display:none" onchange="importLinkedInZip(this)">
-          <span id="profile-import-status" style="font-size:.8rem;display:block;min-height:1.2em;"></span>
-          <div id="profile-import-preview" class="hidden" style="margin-top:10px;font-size:.85rem;"></div>
-          <div id="profile-import-actions" class="hidden" style="margin-top:10px;display:flex;gap:8px;">
-            <button type="button" class="btn btn-primary btn-sm" onclick="applyImportedProfile()" data-i18n="settings.apply_import">Apply to profile</button>
-            <button type="button" class="btn btn-ghost btn-sm" onclick="clearProfileImport()" data-i18n="button.cancel">Cancel</button>
-          </div>
-        </div>
-
-        <hr style="border:none; border-top:1px solid var(--border); margin:8px 0;">
-        <h3 data-i18n="settings.section_platform_login">Platform Login</h3>
-        <p style="color:var(--text-dim); font-size:.85rem; margin-bottom:12px;" data-i18n="settings.login_description">
-          Open a browser to log into your job platforms. Your login session is saved so the bot can apply on your behalf.
+        <h4 class="settings-subheading" data-i18n="settings.section_platform_login">Platform Login</h4>
+        <p style="color:var(--text-dim); font-size:.85rem; margin-bottom:8px;" data-i18n="settings.login_description">
+          Connect to LinkedIn before importing your profile. Open a browser to log into your job platforms — your session is saved for future use.
         </p>
+        <p id="settings-browser-info" style="color:var(--text-dim); font-size:.82rem; margin:0 0 12px;"></p>
         <p style="color:var(--text-dim); font-size:.82rem; margin:0 0 12px;" data-i18n="settings.platform_login_tip">
-          Tip: keep Chrome open briefly after logging in so your session saves correctly.
+          Tip: keep the login browser open briefly after logging in so your session saves correctly.
         </p>
-        <div class="flex-col gap-sm">
+        <div class="flex-col gap-sm" style="margin-bottom:16px;">
           <div class="flex items-center gap-md" style="flex-wrap:wrap;">
             <button class="btn btn-primary btn-sm" id="settings-linkedin-login" onclick="openLoginBrowser('https://www.linkedin.com/login')" data-i18n="settings.open_linkedin_login">Open LinkedIn Login</button>
             <span id="linkedin-session-status" class="status-badge" style="font-size:.8rem;"><span class="dot dot-gray"></span> Not connected</span>
@@ -1190,6 +1170,28 @@
           <button class="btn btn-ghost btn-sm hidden" id="settings-close-browser" onclick="closeLoginBrowser()" style="align-self:flex-start;" data-i18n="button.close_browser">Close Browser</button>
         </div>
 
+        <div class="card profile-import-panel" style="margin-bottom:16px; padding:14px; background:rgba(77,166,255,.04); border:1px solid var(--border);">
+          <h4 style="margin:0 0 6px;" data-i18n="settings.profile_import_title">Quick fill from CV or LinkedIn</h4>
+          <p style="font-size:.85rem;color:var(--text-dim);margin:0 0 12px;" data-i18n="settings.profile_import_hint">
+            Upload your CV or import from LinkedIn to auto-fill name, contact info, bio, job titles, and skills. LinkedIn import requires connecting above first. Requires a configured AI provider.
+          </p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('cv-import-input').click()" data-i18n="settings.import_from_cv">Import from CV</button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="importFromLinkedIn()" id="btn-import-linkedin" disabled data-i18n="settings.import_from_linkedin">Import from LinkedIn</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById('linkedin-zip-input').click()" data-i18n="settings.import_linkedin_zip">LinkedIn export ZIP</button>
+          </div>
+          <p id="linkedin-import-connect-hint" style="font-size:.8rem;color:var(--warning);margin:0 0 8px;" data-i18n="settings.linkedin_connect_first">Connect to LinkedIn above before importing your profile.</p>
+          <input type="file" id="cv-import-input" accept=".pdf,.docx,.doc,.txt,.md" style="display:none" onchange="importFromCV(this)">
+          <input type="file" id="linkedin-zip-input" accept=".zip" style="display:none" onchange="importLinkedInZip(this)">
+          <span id="profile-import-status" style="font-size:.8rem;display:block;min-height:1.2em;"></span>
+          <div id="profile-import-preview" class="hidden" style="margin-top:10px;font-size:.85rem;"></div>
+          <div id="profile-import-actions" class="hidden" style="margin-top:10px;display:flex;gap:8px;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="applyImportedProfile()" data-i18n="settings.apply_import">Apply to profile</button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="clearProfileImport()" data-i18n="button.cancel">Cancel</button>
+          </div>
+        </div>
+
+        <hr style="border:none; border-top:1px solid var(--border); margin:8px 0;">
         <h4 class="settings-subheading has-tip-wrap" data-tip-key="help.tip_languages" data-i18n="settings.section_languages">Languages &amp; Idiomas</h4>
         <p class="subtitle text-dim" data-i18n="settings.languages_help">App language, languages you speak, and languages for job search and applications.</p>
         <div class="settings-grid">

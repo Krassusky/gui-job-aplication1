@@ -109,6 +109,18 @@ export async function wizardImportFromLinkedIn() {
     return;
   }
 
+  try {
+    const sessionsRes = await fetch('/api/login/sessions');
+    const sessions = sessionsRes.ok ? await sessionsRes.json() : {};
+    if (!sessions.linkedin) {
+      setImportStatus('wizard-import-status', t('settings.linkedin_connect_first'), true);
+      return;
+    }
+  } catch {
+    setImportStatus('wizard-import-status', t('settings.linkedin_connect_first'), true);
+    return;
+  }
+
   const btn = document.getElementById('wizard-btn-import-linkedin');
   if (btn) { btn.disabled = true; btn.textContent = t('settings.importing'); }
   setImportStatus('wizard-import-status', t('settings.linkedin_importing'));

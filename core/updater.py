@@ -60,12 +60,25 @@ def get_github_repo() -> str:
 
 def get_install_dir() -> Path | None:
     if getattr(sys, "frozen", False):
-        return Path(sys.executable).resolve().parent
+        exe_path = Path(sys.executable).resolve()
+        if sys.platform == "darwin":
+            parts = exe_path.parts
+            if ".app" in "".join(parts):
+                # .../JobApplyAssistant.app/Contents/MacOS/JobApplyAssistant -> .app
+                for idx, part in enumerate(parts):
+                    if part.endswith(".app"):
+                        return Path(*parts[: idx + 1])
+        return exe_path.parent
     return None
 
 
 def is_updater_available() -> bool:
-    return get_install_dir() is not None and sys.platform == "win32"
+    install_dir = get_install_dir()
+    if install_dir is None:
+        return False
+    if sys.platform == "darwin":
+        return install_dir.name.endswith(".app")
+    return sys.platform == "win32"
 
 
 def check_for_updates() -> dict[str, Any]:
@@ -131,7 +144,7 @@ def start_download() -> None:
 
 
 def apply_update_and_restart() -> None:
-    """Launch a helper script to replace files and restart (Windows only)."""
+    """Launch a helper script to replace files and restart."""
     install_dir = get_install_dir()
     if install_dir is None:
         raise UpdateError("Updates can only be installed from the packaged app.")
@@ -145,15 +158,32 @@ def apply_update_and_restart() -> None:
     if not _package_has_binary(source_dir):
         raise UpdateError("Update package is missing the application executable.")
 
-    if sys.platform != "win32":
-        raise UpdateError("Automatic install is supported on Windows only.")
-
-    bat_path = _write_windows_updater(install_dir, source_dir)
-    subprocess.Popen(
-        ["cmd", "/c", str(bat_path)],
-        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-        close_fds=True,
-    )
+    if sys.platform == "win32":
+        bat_path = _write_windows_updater(install_dir, source_dir)
+        subprocess.Popen(
+            ["cmd", "/c", str(bat_path)],
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            close_fds=True,
+        )
+    elif sys.platform == "darwin":
+        if not install_dir.name.endswith(".app"):
+            raise UpdateError("Could not determine the installed app bundle path.")
+        source_app = source_dir
+        if not source_app.name.endswith(".app"):
+            candidate = source_dir / "JobApplyAssistant.app"
+            if candidate.is_dir():
+                source_app = candidate
+            else:
+                raise UpdateError("Update package is missing the macOS app bundle.")
+        sh_path = _write_macos_updater(install_dir, source_app)
+        subprocess.Popen(
+            ["/bin/bash", str(sh_path)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            close_fds=True,
+        )
+    else:
+        raise UpdateError("Automatic install is not supported on this platform.")
     _set_state(status="installing", message="Restarting...")
 
 
@@ -321,3 +351,25 @@ del /F /Q "%~f0" >nul 2>&1
 """
     bat_path.write_text(content, encoding="utf-8")
     return bat_path
+
+
+def _write_macos_updater(install_app: Path, source_app: Path) -> Path:
+    sh_path = _updates_dir() / "apply_update_mac.sh"
+    content = f"""#!/bin/bash
+set -euo pipefail
+TARGET_APP="{install_app}"
+SOURCE_APP="{source_app}"
+
+sleep 2
+rm -rf "$TARGET_APP"
+cp -R "$SOURCE_APP" "$TARGET_APP"
+xattr -dr com.apple.quarantine "$TARGET_APP" >/dev/null 2>&1 || true
+open "$TARGET_APP"
+rm -f "$0"
+"""
+    sh_path.write_text(content, encoding="utf-8")
+    try:
+        sh_path.chmod(0o755)
+    except OSError:
+        logger.debug("Could not chmod mac updater script: %s", sh_path)
+    return sh_path

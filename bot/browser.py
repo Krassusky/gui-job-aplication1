@@ -6,10 +6,10 @@ Implements: FR-043 (browser session management).
 from __future__ import annotations
 
 import logging
-import os
-import platform
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
+
+from core.browser_engine import launch_persistent_context, preferred_engine, profile_dir
 
 if TYPE_CHECKING:
     from config.settings import AppConfig
@@ -17,37 +17,17 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _find_system_chrome() -> str | None:
-    """Find system-installed Chrome for faster browser sessions."""
-    candidates = []
-    if platform.system() == "Windows":
-        for base in [
-            os.environ.get("PROGRAMFILES", r"C:\Program Files"),
-            os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)"),
-            os.path.expandvars(r"%LOCALAPPDATA%"),
-        ]:
-            candidates.append(os.path.join(base, "Google", "Chrome", "Application", "chrome.exe"))
-    elif platform.system() == "Darwin":
-        candidates.append("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
-    else:
-        candidates.extend(["/usr/bin/google-chrome", "/usr/bin/chromium-browser", "/usr/bin/chromium"])
-
-    for path in candidates:
-        if os.path.isfile(path):
-            return path
-    return None
-
-
 class BrowserManager:
     """Manages a Playwright persistent browser context.
 
     Preserves login sessions between bot runs by using a persistent
-    user data directory at ``~/.autoapply/browser_profile/``.
+    user data directory under ``~/.autoapply/``.
     """
 
     def __init__(self, config: "AppConfig") -> None:
         self.headless = config.bot.apply_mode != "watch"
-        self.profile_dir = Path.home() / ".autoapply" / "browser_profile"
+        self.engine = preferred_engine()
+        self.profile_dir = profile_dir(self.engine)
         self.profile_dir.mkdir(parents=True, exist_ok=True)
 
         self._playwright: Any = None
@@ -61,7 +41,7 @@ class BrowserManager:
             A Playwright Page instance.
 
         Raises:
-            RuntimeError: If Playwright or Chromium is not installed.
+            RuntimeError: If Playwright or the browser engine is not installed.
         """
         if self._page and not self._page.is_closed():
             return self._page
@@ -78,44 +58,28 @@ class BrowserManager:
             self._playwright = sync_playwright().start()
 
         try:
-            chrome_path = _find_system_chrome()
-            launch_kwargs = dict(
-                user_data_dir=str(self.profile_dir),
+            self._context = launch_persistent_context(
+                self._playwright,
+                engine=self.engine,
                 headless=self.headless,
-                viewport={"width": 1280, "height": 800},
-                args=[
-                    "--disable-blink-features=AutomationControlled",
-                    "--disable-dev-shm-usage",
-                    "--no-first-run",
-                    "--no-default-browser-check",
-                    "--disable-extensions",
-                    "--disable-default-apps",
-                    "--disable-popup-blocking",
-                    "--disable-sync",
-                    "--disable-translate",
-                ],
-                ignore_default_args=["--enable-automation"],
-            )
-            if chrome_path:
-                launch_kwargs["executable_path"] = chrome_path
-                logger.info("Using system Chrome: %s", chrome_path)
-
-            self._context = self._playwright.chromium.launch_persistent_context(
-                **launch_kwargs
             )
         except Exception as e:
             error_msg = str(e)
             if "executable doesn't exist" in error_msg.lower():
+                install_cmd = (
+                    "python -m playwright install webkit"
+                    if self.engine == "webkit"
+                    else "python -m playwright install chromium"
+                )
                 raise RuntimeError(
-                    "Playwright Chromium not installed. "
-                    "Run: python -m playwright install chromium"
+                    f"Playwright {self.engine} not installed. Run: {install_cmd}"
                 )
             raise
 
         self._page = self._context.new_page()
         logger.info(
-            "Browser started (headless=%s, profile=%s)",
-            self.headless, self.profile_dir,
+            "Browser started (engine=%s, headless=%s, profile=%s)",
+            self.engine, self.headless, self.profile_dir,
         )
         return self._page
 

@@ -855,7 +855,8 @@ class TestLoginURLValidation:
         monkeypatch.setattr("config.settings.get_data_dir", lambda: tmp_path)
         monkeypatch.setattr("app.get_data_dir", lambda: tmp_path)
         monkeypatch.setattr("routes.profile.get_data_dir", lambda: tmp_path)
-        monkeypatch.setattr("routes.login._find_system_chrome", lambda: None)
+        monkeypatch.setattr("routes.login.find_system_chrome", lambda: None)
+        monkeypatch.setattr("routes.login._open_playwright_login", lambda url, engine: "opening")
 
         _write_config(tmp_path)
 
@@ -864,13 +865,13 @@ class TestLoginURLValidation:
         app.config["TESTING"] = True
         client = app.test_client()
 
-        # Will fail with 500 (no Chrome) but NOT 400 — URL validation passes
+        # WebKit fallback when Chrome is not installed — URL validation still passes
         resp = client.post(
             "/api/login/open",
             data=json.dumps({"url": "https://www.linkedin.com/login"}),
             content_type="application/json",
         )
-        assert resp.status_code == 500  # No Chrome, but URL was accepted
+        assert resp.status_code == 200
 
     def test_ci_workflow_runs_pytest(self):
         """AC-ME1.1: CI workflow runs pytest."""

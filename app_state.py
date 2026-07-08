@@ -32,6 +32,9 @@ bot_thread: threading.Thread | None = None
 
 # Login browser management —————————————————————————————————————————————
 login_proc: subprocess.Popen[bytes] | None = None
+login_playwright: object | None = None
+login_context: object | None = None
+login_engine: str = "chromium"
 login_lock = threading.Lock()
 
 # Validation helpers ———————————————————————————————————————————————————

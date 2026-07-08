@@ -25,9 +25,12 @@ def install_requirements() -> None:
 
 
 def install_playwright() -> None:
-    print("Installing Playwright Chromium browser...")
+    print("Installing Playwright browsers...")
     subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
-    print("Playwright Chromium installed successfully.")
+    if sys.platform == "darwin":
+        print("Installing Playwright WebKit (Safari engine) for macOS...")
+        subprocess.check_call([sys.executable, "-m", "playwright", "install", "webkit"])
+    print("Playwright browsers installed successfully.")
 
 
 def create_directories() -> None:

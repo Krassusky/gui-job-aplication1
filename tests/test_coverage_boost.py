@@ -348,36 +348,36 @@ class TestLifecycleRoutes:
 
 
 # ===================================================================
-# routes/login.py — _find_system_chrome and login_sessions
+# routes/login.py — find_system_chrome and login_sessions
 # ===================================================================
 
 
 class TestLoginFindChrome:
-    """Test routes/login.py _find_system_chrome."""
+    """Test core/browser_engine.py find_system_chrome."""
 
     @patch("platform.system", return_value="Windows")
-    @patch("os.path.isfile", return_value=False)
+    @patch("core.browser_engine.os.path.isfile", return_value=False)
     def test_windows_no_chrome(self, mock_isfile, mock_sys):
-        from routes.login import _find_system_chrome
+        from core.browser_engine import find_system_chrome
 
-        result = _find_system_chrome()
+        result = find_system_chrome()
         assert result is None
 
     @patch("platform.system", return_value="Darwin")
-    @patch("os.path.isfile", return_value=True)
+    @patch("core.browser_engine.os.path.isfile", return_value=True)
     def test_darwin_chrome_found(self, mock_isfile, mock_sys):
-        from routes.login import _find_system_chrome
+        from core.browser_engine import find_system_chrome
 
-        result = _find_system_chrome()
+        result = find_system_chrome()
         assert result is not None
 
     @patch("platform.system", return_value="Linux")
-    @patch("os.path.isfile")
+    @patch("core.browser_engine.os.path.isfile")
     def test_linux_chromium_found(self, mock_isfile, mock_sys):
-        from routes.login import _find_system_chrome
+        from core.browser_engine import find_system_chrome
 
         mock_isfile.side_effect = lambda p: p == "/usr/bin/chromium"
-        result = _find_system_chrome()
+        result = find_system_chrome()
         assert result == "/usr/bin/chromium"
 
 
@@ -390,7 +390,7 @@ class TestLoginOpenEdgeCases:
         self.app = app.app
         self.client = self.app.test_client()
 
-    @patch("routes.login._find_system_chrome", return_value="/usr/bin/chrome")
+    @patch("routes.login.find_system_chrome", return_value="/usr/bin/chrome")
     @patch("routes.login.subprocess.Popen", side_effect=OSError("Cannot start"))
     def test_popen_failure(self, mock_popen, mock_chrome):
         import json
@@ -403,7 +403,7 @@ class TestLoginOpenEdgeCases:
         assert resp.status_code == 500
         assert "Failed" in resp.get_json()["error"]
 
-    @patch("routes.login._find_system_chrome", return_value="/usr/bin/chrome")
+    @patch("routes.login.find_system_chrome", return_value="/usr/bin/chrome")
     @patch("routes.login.subprocess.Popen")
     def test_terminate_previous_browser_exception(self, mock_popen, mock_chrome):
         import json

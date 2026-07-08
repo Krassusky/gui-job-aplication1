@@ -27,6 +27,7 @@ def _locale_en():
 def app_client(tmp_path, monkeypatch):
     """Yield (test_client, tmp_path) with paths redirected to tmp_path."""
     monkeypatch.setattr("config.settings.get_data_dir", lambda: tmp_path)
+    monkeypatch.setattr("core.browser_engine.get_data_dir", lambda: tmp_path)
     monkeypatch.setattr("app.get_data_dir", lambda: tmp_path)
     monkeypatch.setattr("routes.profile.get_data_dir", lambda: tmp_path)
     monkeypatch.setattr("routes.login.get_data_dir", lambda: tmp_path)
@@ -57,6 +58,9 @@ def app_client(tmp_path, monkeypatch):
     # Reset login state between tests
     monkeypatch.setattr(app_module, "_login_proc", None)
     monkeypatch.setattr("app_state.login_proc", None)
+    monkeypatch.setattr("app_state.login_playwright", None)
+    monkeypatch.setattr("app_state.login_context", None)
+    monkeypatch.setattr("app_state.login_engine", "chromium")
 
     app_module.app.config["TESTING"] = True
     return app_module.app.test_client(), tmp_path
@@ -86,19 +90,21 @@ class TestLoginOpen:
         assert rv.status_code == 400
         assert "Only LinkedIn and Indeed" in rv.get_json()["error"]
 
-    @patch("routes.login._find_system_chrome", return_value=None)
-    def test_no_chrome_returns_500(self, _mock, app_client):
+    @patch("routes.login._open_playwright_login", return_value="opening")
+    @patch("routes.login.find_system_chrome", return_value=None)
+    def test_no_chrome_uses_webkit_fallback(self, _mock, mock_webkit, app_client):
         client, _ = app_client
         rv = client.post(
             "/api/login/open",
             json={"url": "https://www.linkedin.com/login"},
         )
-        assert rv.status_code == 500
-        assert "Chrome not found" in rv.get_json()["error"]
+        assert rv.status_code == 200
+        assert rv.get_json()["status"] == "opening"
+        mock_webkit.assert_called_once()
 
     @patch("routes.login._profile_chrome_running", return_value=False)
     @patch("routes.login.subprocess.Popen")
-    @patch("routes.login._find_system_chrome", return_value="C:/chrome.exe")
+    @patch("routes.login.find_system_chrome", return_value="C:/chrome.exe")
     def test_valid_linkedin_url_returns_opening(self, _chrome, mock_popen, _profile, app_client):
         client, _ = app_client
         mock_popen.return_value = MagicMock(pid=1234)
@@ -115,7 +121,7 @@ class TestLoginOpen:
 
     @patch("routes.login._profile_chrome_running", return_value=False)
     @patch("routes.login.subprocess.Popen")
-    @patch("routes.login._find_system_chrome", return_value="C:/chrome.exe")
+    @patch("routes.login.find_system_chrome", return_value="C:/chrome.exe")
     def test_valid_indeed_url_returns_opening(self, _chrome, mock_popen, _profile, app_client):
         client, _ = app_client
         mock_popen.return_value = MagicMock(pid=1234)
@@ -129,7 +135,7 @@ class TestLoginOpen:
     @patch("routes.login._cdp_reachable", return_value=True)
     @patch("routes.login._get_cdp_port", return_value=9222)
     @patch("routes.login.subprocess.Popen")
-    @patch("routes.login._find_system_chrome", return_value="C:/chrome.exe")
+    @patch("routes.login.find_system_chrome", return_value="C:/chrome.exe")
     def test_already_open_reuses_browser(self, _chrome, mock_popen, _port, _cdp, app_client, monkeypatch):
         """If a browser is already open, navigate without terminating."""
         client, _ = app_client
@@ -213,40 +219,40 @@ class TestLoginStatus:
 
 
 # ===================================================================
-# _find_system_chrome (routes/login.py)
+# find_system_chrome (core/browser_engine.py)
 # ===================================================================
 
 
 class TestLoginFindSystemChrome:
-    """Platform-specific Chrome detection in routes/login.py."""
+    """Platform-specific Chrome detection."""
 
     @patch("platform.system", return_value="Windows")
-    @patch("routes.login.os.path.isfile", return_value=False)
+    @patch("core.browser_engine.os.path.isfile", return_value=False)
     def test_windows_no_chrome(self, mock_isfile, mock_sys):
-        from routes.login import _find_system_chrome
-        assert _find_system_chrome() is None
+        from core.browser_engine import find_system_chrome
+        assert find_system_chrome() is None
 
     @patch("platform.system", return_value="Windows")
-    @patch("routes.login.os.path.isfile")
+    @patch("core.browser_engine.os.path.isfile")
     def test_windows_chrome_found(self, mock_isfile, mock_sys):
-        from routes.login import _find_system_chrome
+        from core.browser_engine import find_system_chrome
         mock_isfile.side_effect = lambda p: "chrome.exe" in p.lower()
-        result = _find_system_chrome()
+        result = find_system_chrome()
         assert result is not None
         assert "chrome.exe" in result.lower()
 
     @patch("platform.system", return_value="Darwin")
-    @patch("routes.login.os.path.isfile", return_value=True)
+    @patch("core.browser_engine.os.path.isfile", return_value=True)
     def test_darwin_chrome_found(self, mock_isfile, mock_sys):
-        from routes.login import _find_system_chrome
-        result = _find_system_chrome()
+        from core.browser_engine import find_system_chrome
+        result = find_system_chrome()
         assert "Google Chrome" in result
 
     @patch("platform.system", return_value="Linux")
-    @patch("routes.login.os.path.isfile", return_value=False)
+    @patch("core.browser_engine.os.path.isfile", return_value=False)
     def test_linux_no_chrome(self, mock_isfile, mock_sys):
-        from routes.login import _find_system_chrome
-        assert _find_system_chrome() is None
+        from core.browser_engine import find_system_chrome
+        assert find_system_chrome() is None
 
 
 # ===================================================================
@@ -259,16 +265,16 @@ class TestLoginOpenErrors:
 
     @patch("routes.login._profile_chrome_running", return_value=False)
     @patch("routes.login.subprocess.Popen", side_effect=OSError("Permission denied"))
-    @patch("routes.login._find_system_chrome", return_value="C:/chrome.exe")
+    @patch("routes.login.find_system_chrome", return_value="C:/chrome.exe")
     def test_popen_failure_returns_500(self, _chrome, _popen, _profile, app_client):
         client, _ = app_client
         rv = client.post("/api/login/open", json={"url": "https://www.linkedin.com/login"})
         assert rv.status_code == 500
-        assert "Failed to open Chrome" in rv.get_json()["error"]
+        assert "Failed to open browser" in rv.get_json()["error"]
 
     @patch("routes.login._profile_chrome_running", return_value=False)
     @patch("routes.login.subprocess.Popen")
-    @patch("routes.login._find_system_chrome", return_value="C:/chrome.exe")
+    @patch("routes.login.find_system_chrome", return_value="C:/chrome.exe")
     def test_stale_proc_clears_before_open(self, _chrome, mock_popen, _profile, app_client, monkeypatch):
         """Exited login proc is cleared and a fresh browser is opened."""
         client, _ = app_client

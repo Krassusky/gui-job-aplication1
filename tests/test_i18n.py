@@ -58,7 +58,7 @@ class TestLocaleFile:
             "bot_already_running", "config_not_found", "no_review_pending",
             "cover_letter_required", "invalid_days", "invalid_time_format",
             "url_required", "invalid_url", "unsupported_login_url",
-            "chrome_not_found", "chrome_failed", "provider_key_required",
+            "chrome_not_found", "chrome_failed", "browser_failed", "provider_key_required",
             "unsupported_provider", "invalid_config",
             "filename_content_required", "filename_required",
             "invalid_filename", "invalid_filename_detail",

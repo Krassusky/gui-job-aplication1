@@ -9,6 +9,7 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+from core.browser_engine import launch_persistent_context, preferred_engine
 from core.browser_profile import (
     cdp_reachable,
     ensure_profile_available_for_playwright,
@@ -134,21 +135,13 @@ def scrape_linkedin_profile(profile_path: Path | None = None) -> dict[str, Any]:
                 created_page = True
             else:
                 ensure_profile_available_for_playwright(root)
-                chrome_path = _find_system_chrome()
-                launch_kwargs: dict[str, Any] = dict(
-                    user_data_dir=str(root),
+                engine = preferred_engine()
+                context = launch_persistent_context(
+                    playwright,
+                    engine=engine,
                     headless=True,
                     viewport={"width": 1280, "height": 900},
-                    args=[
-                        "--disable-blink-features=AutomationControlled",
-                        "--no-first-run",
-                        "--remote-debugging-port=0",
-                    ],
-                    ignore_default_args=["--enable-automation"],
                 )
-                if chrome_path:
-                    launch_kwargs["executable_path"] = chrome_path
-                context = playwright.chromium.launch_persistent_context(**launch_kwargs)
                 own_context = True
                 page = context.new_page()
                 created_page = True
@@ -252,26 +245,3 @@ def _safe_inner_text(page, selector: str) -> str:
         return (el.inner_text() or "").strip() if el else ""
     except Exception:
         return ""
-
-
-def _find_system_chrome() -> str | None:
-    import os
-    import platform
-
-    candidates: list[str] = []
-    if platform.system() == "Windows":
-        for base in [
-            os.environ.get("PROGRAMFILES", r"C:\Program Files"),
-            os.environ.get("PROGRAMFILES(X86)", r"C:\Program Files (x86)"),
-            os.path.expandvars(r"%LOCALAPPDATA%"),
-        ]:
-            candidates.append(os.path.join(base, "Google", "Chrome", "Application", "chrome.exe"))
-    elif platform.system() == "Darwin":
-        candidates.append("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
-    else:
-        candidates.extend(["/usr/bin/google-chrome", "/usr/bin/chromium-browser", "/usr/bin/chromium"])
-
-    for path in candidates:
-        if os.path.isfile(path):
-            return path
-    return None

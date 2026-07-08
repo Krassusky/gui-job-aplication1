@@ -49,6 +49,28 @@ function updateSessionBadges(data) {
       el.style.fontSize = '.8rem';
     }
   }
+  updateLinkedInImportState(!!data.linkedin);
+}
+
+export function updateLinkedInImportState(linkedinConnected) {
+  for (const id of ['btn-import-linkedin', 'wizard-btn-import-linkedin']) {
+    const btn = document.getElementById(id);
+    if (btn) btn.disabled = !linkedinConnected;
+  }
+  const hint = document.getElementById('linkedin-import-connect-hint');
+  if (hint) hint.classList.toggle('hidden', linkedinConnected);
+}
+
+export async function loadBrowserInfo() {
+  try {
+    const res = await fetch('/api/login/browser-info');
+    if (!res.ok) return;
+    const data = await res.json();
+    const el = document.getElementById('settings-browser-info');
+    if (el && data.display_name) {
+      el.textContent = t('settings.browser_engine', { name: data.display_name });
+    }
+  } catch { /* non-critical */ }
 }
 
 function stopLoginPolling() {

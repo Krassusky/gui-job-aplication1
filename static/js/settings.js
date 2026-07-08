@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════════ */
 import { state } from './state.js';
 import { setTags } from './tag-input.js';
-import { checkLoginSessions } from './login.js';
+import { checkLoginSessions, loadBrowserInfo } from './login.js';
 import { t, getLocale, setLocale } from './i18n.js';
 import { refreshHelp } from './help.js';
 import { updateAIIndicators } from './ai-status.js';
@@ -119,6 +119,7 @@ export async function loadSettings() {
     document.getElementById('set-schedule-end').value = sched.end_time || '17:00';
     updateScheduleUI();
     checkLoginSessions();
+    loadBrowserInfo();
     _loadLocaleDropdown();
     initProfileImportButtons();
   } catch { }
@@ -675,6 +676,18 @@ export async function importFromCV(input) {
 export async function importFromLinkedIn() {
   if (!state.aiAvailable) {
     setImportStatus('profile-import-status', t('wizard.import_ai_required'), true);
+    return;
+  }
+
+  try {
+    const sessionsRes = await fetch('/api/login/sessions');
+    const sessions = sessionsRes.ok ? await sessionsRes.json() : {};
+    if (!sessions.linkedin) {
+      setImportStatus('profile-import-status', t('settings.linkedin_connect_first'), true);
+      return;
+    }
+  } catch {
+    setImportStatus('profile-import-status', t('settings.linkedin_connect_first'), true);
     return;
   }
 

@@ -20,15 +20,15 @@
 1. Download **`JobApplyAssistant-*-mac-arm64.zip`** (most MacBooks) or **`mac-x64`** (older Intel Mac)
 2. Extract the zip and drag **`JobApplyAssistant.app`** to **Applications**
 3. First launch: **right-click → Open → Open** (unsigned builds)
-4. Install **Google Chrome** if you don't have it
+4. **Google Chrome is not required** — the app uses Safari (WebKit) on Mac
 
-See **`LEIA-ME-MAC.txt`** inside the app for Portuguese instructions.
+See **`COMECE-AQUI.txt`** inside the zip for Portuguese instructions.
 
 ### In-app updates
 
-**Windows only:** Settings → Updates → Update now.
+**Windows and macOS:** open the app → **Settings → Updates** → **Check for updates** or **Update now**.
 
-**macOS:** download the new zip from GitHub and replace the app in Applications.
+The app checks GitHub once per day and shows a banner when a new version is available.
 
 User data is stored in `~/.autoapply/` (macOS/Linux) or `%USERPROFILE%\.autoapply\` (Windows).
 

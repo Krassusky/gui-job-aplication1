@@ -36,7 +36,7 @@ class TestVersionInfo:
 
     def test_get_app_version_reads_pyproject(self):
         get_app_version.cache_clear()
-        assert get_app_version() == "1.0.6"
+        assert get_app_version() == "1.0.7"
 
 
 class TestUpdater:

@@ -4,6 +4,16 @@ All notable changes to AutoApply are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.7] - 2026-07-08
+
+### Added
+- **macOS Safari-first browser**: Platform login and automation use WebKit (Safari engine) on Mac, even when Chrome is installed.
+- **macOS in-app updates**: Settings → Updates can download and install new versions without manual zip replacement.
+- **LinkedIn-first settings flow**: Platform Login appears before profile import; LinkedIn import stays disabled until connected.
+
+### Changed
+- WebKit runtime is installed automatically on macOS when needed (no Terminal steps for users).
+
 ## [1.0.6] - 2026-06-24
 
 ### Fixed

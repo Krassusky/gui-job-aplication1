@@ -11,57 +11,56 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # ===================================================================
-# _find_system_chrome
+# find_system_chrome (core/browser_engine.py)
 # ===================================================================
 
 
 class TestFindSystemChrome:
     """Platform-specific Chrome detection."""
 
-    @patch("bot.browser.platform.system", return_value="Windows")
-    @patch("bot.browser.os.path.isfile", return_value=False)
+    @patch("core.browser_engine.platform.system", return_value="Windows")
+    @patch("core.browser_engine.os.path.isfile", return_value=False)
     def test_windows_no_chrome(self, mock_isfile, mock_sys):
-        from bot.browser import _find_system_chrome
+        from core.browser_engine import find_system_chrome
 
-        result = _find_system_chrome()
+        result = find_system_chrome()
         assert result is None
-        # Should check at least 3 candidates
         assert mock_isfile.call_count >= 3
 
-    @patch("bot.browser.platform.system", return_value="Windows")
-    @patch("bot.browser.os.path.isfile")
+    @patch("core.browser_engine.platform.system", return_value="Windows")
+    @patch("core.browser_engine.os.path.isfile")
     def test_windows_chrome_found(self, mock_isfile, mock_sys):
-        from bot.browser import _find_system_chrome
+        from core.browser_engine import find_system_chrome
 
         mock_isfile.side_effect = lambda p: "chrome.exe" in p.lower()
-        result = _find_system_chrome()
+        result = find_system_chrome()
         assert result is not None
         assert "chrome.exe" in result.lower()
 
-    @patch("bot.browser.platform.system", return_value="Darwin")
-    @patch("bot.browser.os.path.isfile", return_value=True)
+    @patch("core.browser_engine.platform.system", return_value="Darwin")
+    @patch("core.browser_engine.os.path.isfile", return_value=True)
     def test_darwin_chrome_found(self, mock_isfile, mock_sys):
-        from bot.browser import _find_system_chrome
+        from core.browser_engine import find_system_chrome
 
-        result = _find_system_chrome()
+        result = find_system_chrome()
         assert result is not None
         assert "Google Chrome" in result
 
-    @patch("bot.browser.platform.system", return_value="Linux")
-    @patch("bot.browser.os.path.isfile", return_value=False)
+    @patch("core.browser_engine.platform.system", return_value="Linux")
+    @patch("core.browser_engine.os.path.isfile", return_value=False)
     def test_linux_no_chrome(self, mock_isfile, mock_sys):
-        from bot.browser import _find_system_chrome
+        from core.browser_engine import find_system_chrome
 
-        result = _find_system_chrome()
+        result = find_system_chrome()
         assert result is None
 
-    @patch("bot.browser.platform.system", return_value="Linux")
-    @patch("bot.browser.os.path.isfile")
+    @patch("core.browser_engine.platform.system", return_value="Linux")
+    @patch("core.browser_engine.os.path.isfile")
     def test_linux_chrome_found(self, mock_isfile, mock_sys):
-        from bot.browser import _find_system_chrome
+        from core.browser_engine import find_system_chrome
 
         mock_isfile.side_effect = lambda p: p == "/usr/bin/google-chrome"
-        result = _find_system_chrome()
+        result = find_system_chrome()
         assert result == "/usr/bin/google-chrome"
 
 
@@ -127,11 +126,10 @@ class TestBrowserManagerGetPage:
                 with pytest.raises(RuntimeError, match="Playwright is required"):
                     bm.get_page()
 
-    @patch("bot.browser._find_system_chrome", return_value="/usr/bin/chrome")
-    def test_chromium_not_installed_raises(self, mock_chrome):
+    @patch("bot.browser.launch_persistent_context")
+    def test_chromium_not_installed_raises(self, mock_launch):
         from bot.browser import BrowserManager
 
-        # Mock the playwright import
         mock_pw_module = MagicMock()
         mock_sync_pw = MagicMock()
         mock_pw_module.sync_playwright.return_value.__enter__ = MagicMock()
@@ -141,19 +139,18 @@ class TestBrowserManagerGetPage:
         bm._page = None
         bm._context = None
         bm.headless = True
+        bm.engine = "chromium"
         bm.profile_dir = MagicMock()
         bm._playwright = mock_sync_pw
 
-        mock_sync_pw.chromium.launch_persistent_context.side_effect = Exception(
-            "Executable doesn't exist at /path"
-        )
+        mock_launch.side_effect = Exception("Executable doesn't exist at /path")
 
-        with pytest.raises(RuntimeError, match="Playwright Chromium not installed"):
+        with pytest.raises(RuntimeError, match="Playwright chromium not installed"):
             with patch.dict("sys.modules", {"playwright": MagicMock(), "playwright.sync_api": mock_pw_module}):
                 bm.get_page()
 
-    @patch("bot.browser._find_system_chrome", return_value=None)
-    def test_other_launch_error_reraises(self, mock_chrome):
+    @patch("bot.browser.launch_persistent_context")
+    def test_other_launch_error_reraises(self, mock_launch):
         from bot.browser import BrowserManager
 
         mock_pw_module = MagicMock()
@@ -163,17 +160,18 @@ class TestBrowserManagerGetPage:
         bm._page = None
         bm._context = None
         bm.headless = True
+        bm.engine = "chromium"
         bm.profile_dir = MagicMock()
         bm._playwright = mock_sync_pw
 
-        mock_sync_pw.chromium.launch_persistent_context.side_effect = Exception("Random error")
+        mock_launch.side_effect = Exception("Random error")
 
         with pytest.raises(Exception, match="Random error"):
             with patch.dict("sys.modules", {"playwright": MagicMock(), "playwright.sync_api": mock_pw_module}):
                 bm.get_page()
 
-    @patch("bot.browser._find_system_chrome", return_value="/usr/bin/chrome")
-    def test_successful_page_creation(self, mock_chrome):
+    @patch("bot.browser.launch_persistent_context")
+    def test_successful_page_creation(self, mock_launch):
         from bot.browser import BrowserManager
 
         mock_pw_module = MagicMock()
@@ -183,13 +181,14 @@ class TestBrowserManagerGetPage:
         bm._page = None
         bm._context = None
         bm.headless = True
+        bm.engine = "chromium"
         bm.profile_dir = MagicMock()
         bm._playwright = mock_sync_pw
 
         mock_context = MagicMock()
         mock_page = MagicMock()
         mock_context.new_page.return_value = mock_page
-        mock_sync_pw.chromium.launch_persistent_context.return_value = mock_context
+        mock_launch.return_value = mock_context
 
         with patch.dict("sys.modules", {"playwright": MagicMock(), "playwright.sync_api": mock_pw_module}):
             result = bm.get_page()
@@ -311,8 +310,8 @@ class TestBrowserManagerRealInit:
 class TestBrowserManagerPlaywrightStart:
     """Tests for the sync_playwright().start() path in get_page."""
 
-    @patch("bot.browser._find_system_chrome", return_value=None)
-    def test_starts_playwright_on_first_call(self, mock_chrome):
+    @patch("bot.browser.launch_persistent_context")
+    def test_starts_playwright_on_first_call(self, mock_launch):
         from bot.browser import BrowserManager
 
         mock_sync_pw_func = MagicMock()
@@ -370,10 +369,11 @@ class TestBrowserManagerPlaywrightStart:
         bm._context = None
         bm._playwright = mock_sync_pw
         bm.headless = True
+        bm.engine = "chromium"
         bm.profile_dir = MagicMock()
 
-        with patch("bot.browser._find_system_chrome", return_value=None):
-            with patch.dict("sys.modules", {"playwright": MagicMock(), "playwright.sync_api": MagicMock()}):
+        with patch.dict("sys.modules", {"playwright": MagicMock(), "playwright.sync_api": MagicMock()}):
+            with patch("bot.browser.launch_persistent_context", return_value=mock_context):
                 result = bm.get_page()
 
         assert result is mock_new_page

@@ -31,7 +31,7 @@ Se o Mac bloquear na primeira abertura:
    - Clique com o botão direito em JobApplyAssistant.app → Abrir → Abrir
    - (só precisa fazer isso uma vez)
 
-Precisa do Google Chrome instalado.
+Nao precisa do Google Chrome — no Mac usamos o motor Safari integrado.
 
 Download atualizado:
 https://github.com/Krassusky/gui-job-aplication1/releases/latest
