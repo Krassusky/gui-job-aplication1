@@ -38,6 +38,7 @@ guilherme-setup.zip
 *.pem
 *.key
 presets/guilherme-menegatti/secrets.env
+presets/.active_preset
 
 # Test / Coverage
 .coverage

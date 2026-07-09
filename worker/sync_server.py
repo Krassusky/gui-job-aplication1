@@ -6,10 +6,12 @@ import logging
 import os
 import threading
 
-from flask import Flask, jsonify, request
+from flask import Flask, Response, jsonify, request
 
 from config.settings import get_data_dir
 from db.database import Database
+from worker.hunter_dashboard_html import DASHBOARD_HTML
+from worker.hunter_state import hunter_state
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +43,24 @@ def create_sync_app(db: Database | None = None) -> Flask:
     """Create the sync Flask application."""
     app = Flask(__name__)
     database = db or Database(get_data_dir() / "autoapply.db")
+
+    @app.route("/", methods=["GET"])
+    @app.route("/dashboard", methods=["GET"])
+    def dashboard():
+        return Response(DASHBOARD_HTML, mimetype="text/html; charset=utf-8")
+
+    @app.route("/api/hunter/dashboard", methods=["GET"])
+    def hunter_dashboard_api():
+        stats = hunter_state.get_stats_dict()
+        pending = database.get_sync_jobs(limit=50)
+        stats["pending_sync"] = len(pending)
+        return jsonify(
+            {
+                "stats": stats,
+                "activity": hunter_state.get_events(limit=100),
+                "pending_jobs": pending,
+            }
+        )
 
     @app.route("/api/sync/health", methods=["GET"])
     def health():

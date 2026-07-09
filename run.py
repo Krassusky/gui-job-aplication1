@@ -148,6 +148,16 @@ def main() -> None:
     # Default to GUI mode when running as frozen PyInstaller bundle
     is_frozen = getattr(sys, "frozen", False)
 
+    if is_frozen:
+        try:
+            from presets.bootstrap import apply_bundled_preset_if_needed
+
+            apply_bundled_preset_if_needed()
+        except Exception:
+            logging.getLogger(__name__).exception(
+                "Bundled preset bootstrap failed — continuing with existing config"
+            )
+
     if args.gui or is_frozen:
         if is_frozen:
             if sys.platform == "win32":

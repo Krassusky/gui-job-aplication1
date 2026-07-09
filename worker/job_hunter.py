@@ -18,6 +18,7 @@ from bot.browser import BrowserManager
 from config.settings import AppConfig, get_data_dir, load_config
 from core.filter import score_job
 from db.database import Database
+from worker.hunter_state import hunter_state
 from worker.sync_server import start_sync_server_thread
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,12 @@ def run_hunt_cycle(
                         raw_job.company,
                         raw_job.platform,
                     )
+                    hunter_state.record(
+                        "found",
+                        job_title=raw_job.title,
+                        company=raw_job.company,
+                        platform=raw_job.platform,
+                    )
 
                     scored = score_job(raw_job, config, db)
                     if not scored.pass_filter:
@@ -108,6 +115,14 @@ def run_hunt_cycle(
                             "Filtered: %s — %s",
                             raw_job.title,
                             scored.skip_reason,
+                        )
+                        hunter_state.record(
+                            "filtered",
+                            job_title=raw_job.title,
+                            company=raw_job.company,
+                            platform=raw_job.platform,
+                            score=scored.score,
+                            reason=scored.skip_reason or "",
                         )
                         continue
 
@@ -134,8 +149,17 @@ def run_hunt_cycle(
                             raw_job.title,
                             raw_job.company,
                         )
+                        hunter_state.record(
+                            "saved",
+                            job_title=raw_job.title,
+                            company=raw_job.company,
+                            platform=raw_job.platform,
+                            score=scored.score,
+                            job_id=app_id,
+                        )
             except Exception as e:
                 logger.error("Search cycle error on %s: %s", searcher, e)
+                hunter_state.record("error", message=str(e))
 
     finally:
         if browser:
@@ -172,6 +196,7 @@ def run_job_hunter(
     while not stop_flag[0]:
         saved = run_hunt_cycle(config, database, stop_flag)
         logger.info("Hunt cycle complete — saved %d job(s)", saved)
+        hunter_state.record("cycle", message=str(saved))
 
         if once:
             break

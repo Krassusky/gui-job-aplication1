@@ -64,6 +64,7 @@ elif [[ "${RUNNER_OS:-}" == "macOS" || "$(uname -s)" == "Darwin" ]]; then
   cp ../scripts/install_shortcuts_mac.command "Install JobApply Assistant.command"
   cp ../scripts/unblock_mac.command "Desbloquear arquivos.command"
   cp ../COMECE-AQUI-MAC.txt "COMECE-AQUI.txt"
+  cp ../INSTALACAO-MAC-GUILHERME.md "INSTALACAO-MAC-GUILHERME.md"
   cp ../LEIA-ME-MAC.txt LEIA-ME-MAC.txt
   chmod +x "Install JobApply Assistant.command" "Desbloquear arquivos.command"
   mkdir -p JobApplyAssistant.app/Contents/Resources
@@ -75,6 +76,7 @@ elif [[ "${RUNNER_OS:-}" == "macOS" || "$(uname -s)" == "Darwin" ]]; then
     "Install JobApply Assistant.command" \
     "Desbloquear arquivos.command" \
     "COMECE-AQUI.txt" \
+    "INSTALACAO-MAC-GUILHERME.md" \
     "LEIA-ME-MAC.txt"
   notarize_macos_zip "JobApplyAssistant-${VERSION}-${PLATFORM}.zip"
 

@@ -63,6 +63,18 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$APPLE_CERTIFICATE_PASSWORD" "$KEYCHAIN"
           rm -f certificate.p12
 
+      - name: Prepare Guilherme preset bundle (optional)
+        if: runner.os == 'macOS'
+        env:
+          GUILHERME_GROQ_API_KEY: ${{ secrets.GUILHERME_GROQ_API_KEY }}
+        run: |
+          if [ -n "${GUILHERME_GROQ_API_KEY:-}" ]; then
+            echo "GROQ_API_KEY=${GUILHERME_GROQ_API_KEY}" > presets/guilherme-menegatti/secrets.env
+            bash scripts/prepare_guilherme_mac_release.sh
+          else
+            echo "No GUILHERME_GROQ_API_KEY secret — generic Mac build (no auto-preset)."
+          fi
+
       - name: Build with PyInstaller
         env:
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}

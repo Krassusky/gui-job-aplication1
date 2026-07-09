@@ -82,6 +82,21 @@ The worker:
 - Waits `search_interval_seconds` between cycles (from config)
 - Logs structured lines to stdout
 
+### Hunter dashboard (local browser)
+
+While the hunter is running, open:
+
+- `http://127.0.0.1:8765/dashboard` on the hunter machine
+- `http://<lan-or-tailscale-ip>:8765/dashboard` from another device on the same network
+
+The page auto-refreshes every 10 seconds and shows:
+
+- Cycle stats (found / filtered / saved)
+- Jobs waiting for Mac sync (`pending_sync`)
+- Live activity feed (found, filtered, saved, errors)
+
+JSON API (no auth): `GET /api/hunter/dashboard`
+
 ### systemd example (optional)
 
 ```ini

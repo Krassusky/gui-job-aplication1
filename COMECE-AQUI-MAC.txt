@@ -27,11 +27,26 @@ Siga estes 3 passos na ordem:
    cp -R JobApplyAssistant.app /Applications/
    open /Applications/JobApplyAssistant.app
 
+PERFIL JÁ PREENCHIDO (edição Guilherme)
+---------------------------------------
+Na primeira abertura, o app instala automaticamente:
+  - Nome, e-mail, telefone, LinkedIn
+  - Currículo (default_resume.docx)
+  - Arquivos de experiência para a IA
+  - Chave Groq (se incluída na build)
+
+Você só precisa fazer uma vez:
+  - Settings → Platform Login → LinkedIn (e-mail/senha, não Google)
+  - Settings → Import Jobs from Home Server (URL + token do PC de casa)
+
 Se o Mac bloquear na primeira abertura:
    - Clique com o botão direito em JobApplyAssistant.app → Abrir → Abrir
    - (só precisa fazer isso uma vez)
 
-Nao precisa do Google Chrome — no Mac usamos o motor Safari integrado.
+Não precisa do Google Chrome — no Mac usamos o motor Safari integrado.
 
-Download atualizado:
-https://github.com/Krassusky/gui-job-aplication1/releases/latest
+Download atualizado (Guilherme — perfil pré-preenchido):
+https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.9
+
+Guia completo com comandos do Terminal:
+  INSTALACAO-MAC-GUILHERME.md (dentro do zip)

@@ -15,17 +15,22 @@ What is included
 
 Install on Guilherme's Mac
 --------------------------
+Option A — Guilherme Mac app build (recommended)
+1. On the build machine, create presets/guilherme-menegatti/secrets.env:
+     GROQ_API_KEY=gsk_...
+2. Run: bash scripts/prepare_guilherme_mac_release.sh
+3. Build Mac release (pyinstaller / GitHub release with GUILHERME_GROQ_API_KEY secret).
+4. Guilherme installs the .zip — profile, resume, and Groq key apply on first open.
+5. One-time only: Settings -> Platform Login -> LinkedIn
+6. Settings -> Import Jobs from Home Server (home PC URL + token)
+
+Option B — Manual preset (no special build)
 1. Copy the whole `presets/guilherme-menegatti` folder to his Mac
    (or send him the setup zip you build from repo root).
-2. From repo root on Mac, run:
-
-   chmod +x scripts/setup_guilherme_preset_mac.command
-   ./scripts/setup_guilherme_preset_mac.command
-
+2. Double-click Configurar Guilherme.command (or run setup script).
 3. Open JobApply Assistant.
-4. One-time only: Settings -> Platform Login -> Open LinkedIn login
-   (use email/password, not Google sign-in).
-5. Dashboard -> Start bot.
+4. One-time only: Settings -> Platform Login -> LinkedIn
+5. Settings -> Import Jobs from Home Server
 
 Important
 ---------

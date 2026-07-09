@@ -16,24 +16,33 @@ import sys
 from pathlib import Path
 
 block_cipher = None
-project_root = Path(SPECPATH)
-_pyproject = (project_root / "pyproject.toml").read_text(encoding="utf-8")
+_project_root = Path(SPECPATH)
+_pyproject = (_project_root / "pyproject.toml").read_text(encoding="utf-8")
 _app_version = re.search(r'^version\s*=\s*["\']([^"\']+)["\']', _pyproject, re.MULTILINE)
 APP_VERSION = _app_version.group(1) if _app_version else "0.0.0"
-_icon_icns = project_root / "static" / "icons" / "icon.icns"
-_icon_ico = project_root / "static" / "icons" / "icon.ico"
+_icon_icns = _project_root / "static" / "icons" / "icon.icns"
+_icon_ico = _project_root / "static" / "icons" / "icon.ico"
+
+_datas = [
+    (str(_project_root / "templates"), "templates"),
+    (str(_project_root / "static"), "static"),
+    (str(_project_root / "pyproject.toml"), "."),
+    (str(_project_root / "LEIA-ME.txt"), "."),
+    (str(_project_root / "LEIA-ME-MAC.txt"), "."),
+]
+_active_preset = _project_root / "presets" / ".active_preset"
+if _active_preset.is_file():
+    _preset_id = _active_preset.read_text(encoding="utf-8").strip()
+    _preset_dir = _project_root / "presets" / _preset_id
+    if _preset_dir.is_dir():
+        _datas.append((str(_preset_dir), f"presets/{_preset_id}"))
+        _datas.append((str(_active_preset), "presets"))
 
 a = Analysis(
-    [str(project_root / "run.py")],
-    pathex=[str(project_root)],
+    [str(_project_root / "run.py")],
+    pathex=[str(_project_root)],
     binaries=[],
-    datas=[
-        (str(project_root / "templates"), "templates"),
-        (str(project_root / "static"), "static"),
-        (str(project_root / "pyproject.toml"), "."),
-        (str(project_root / "LEIA-ME.txt"), "."),
-        (str(project_root / "LEIA-ME-MAC.txt"), "."),
-    ],
+    datas=_datas,
     hiddenimports=[
         # Gevent + SocketIO
         "gevent",
@@ -87,6 +96,8 @@ a = Analysis(
         "shell.single_instance",
         "shell.win_motw",
         "shell.mac_quarantine",
+        "presets",
+        "presets.bootstrap",
     ],
     hookspath=[],
     hooksconfig={},

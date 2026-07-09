@@ -4,6 +4,13 @@ All notable changes to AutoApply are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.9] - 2026-07-09
+
+### Added
+- **Guilherme auto-preset on Mac install**: macOS builds with `GUILHERME_GROQ_API_KEY` bundle profile, resume, experience files, and Groq API key on first launch.
+- **Job Hunter dashboard** at `/dashboard` on the sync server (live found/filtered/saved feed).
+- **`INSTALACAO-MAC-GUILHERME.md`**: Step-by-step Terminal install guide for Guilherme (quarantine, install, first launch).
+
 ## [1.0.8] - 2026-07-08
 
 ### Added
