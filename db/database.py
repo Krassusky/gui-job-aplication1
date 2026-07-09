@@ -186,6 +186,10 @@ class Database:
         }
         if "description_path" not in columns:
             conn.execute("ALTER TABLE applications ADD COLUMN description_path TEXT")
+        if "description_text" not in columns:
+            conn.execute("ALTER TABLE applications ADD COLUMN description_text TEXT")
+        if "synced_at" not in columns:
+            conn.execute("ALTER TABLE applications ADD COLUMN synced_at DATETIME")
 
         # M1: Add reuse columns to resume_versions for existing DBs
         rv_columns = {
@@ -242,6 +246,7 @@ class Database:
         status: str,
         error_message: str | None,
         description_path: str | None = None,
+        description_text: str | None = None,
     ) -> int:
         with self._connect() as conn:
             cursor = conn.execute(
@@ -249,16 +254,104 @@ class Database:
                 INSERT INTO applications (
                     external_id, platform, job_title, company, location, salary,
                     apply_url, match_score, resume_path, cover_letter_path,
-                    cover_letter_text, description_path, status, error_message
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    cover_letter_text, description_path, description_text,
+                    status, error_message
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     external_id, platform, job_title, company, location, salary,
                     apply_url, match_score, resume_path, cover_letter_path,
-                    cover_letter_text, description_path, status, error_message,
+                    cover_letter_text, description_path, description_text,
+                    status, error_message,
                 ),
             )
             return cursor.lastrowid  # type: ignore[return-value]
+
+    def save_discovered_job(
+        self,
+        external_id: str,
+        platform: str,
+        job_title: str,
+        company: str,
+        location: str | None,
+        salary: str | None,
+        apply_url: str,
+        match_score: int,
+        description_path: str | None = None,
+        description_text: str | None = None,
+        status: str = "pending_sync",
+    ) -> int | None:
+        """Save a discovered job from the Job Hunter worker. Returns id or None if duplicate."""
+        if self.exists(external_id, platform):
+            return None
+        return self.save_application(
+            external_id=external_id,
+            platform=platform,
+            job_title=job_title,
+            company=company,
+            location=location,
+            salary=salary,
+            apply_url=apply_url,
+            match_score=match_score,
+            resume_path=None,
+            cover_letter_path=None,
+            cover_letter_text=None,
+            status=status,
+            error_message=None,
+            description_path=description_path,
+            description_text=description_text,
+        )
+
+    def get_sync_jobs(self, since: str | None = None, limit: int = 100) -> list[dict]:
+        """Return jobs pending sync to a remote Mac client."""
+        query = """
+            SELECT id, external_id, platform, job_title, company, location, salary,
+                   apply_url, match_score, status, applied_at, updated_at
+            FROM applications
+            WHERE status = 'pending_sync'
+        """
+        params: list = []
+        if since:
+            query += " AND updated_at > ?"
+            params.append(since)
+        query += " ORDER BY updated_at ASC LIMIT ?"
+        params.append(limit)
+
+        with self._connect() as conn:
+            rows = conn.execute(query, params).fetchall()
+            return [dict(row) for row in rows]
+
+    def get_sync_job(self, application_id: int) -> dict | None:
+        """Return full job detail for sync, including description text."""
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT * FROM applications WHERE id = ?", (application_id,)
+            ).fetchone()
+            if row is None:
+                return None
+            data = dict(row)
+            if not data.get("description_text") and data.get("description_path"):
+                path = Path(str(data["description_path"]))
+                if path.exists():
+                    try:
+                        data["description_text"] = path.read_text(encoding="utf-8")
+                    except OSError:
+                        data["description_text"] = ""
+            return data
+
+    def ack_sync_job(self, application_id: int) -> bool:
+        """Mark a job as synced after the Mac client imported it."""
+        with self._connect() as conn:
+            cursor = conn.execute(
+                """
+                UPDATE applications
+                SET status = 'synced', synced_at = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ? AND status = 'pending_sync'
+                """,
+                (application_id,),
+            )
+            return cursor.rowcount > 0
 
     def update_status(self, application_id: int, status: str, notes: str | None = None) -> None:
         with self._connect() as conn:

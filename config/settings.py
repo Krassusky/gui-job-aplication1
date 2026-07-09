@@ -143,6 +143,8 @@ class LLMConfig(BaseModel):
     model: str = ""
     providers: list[LLMProviderEntry] = Field(default_factory=list)
     active_id: str = ""
+    ollama_fallback_enabled: bool = False
+    ollama_model: str = ""
 
     @model_validator(mode="after")
     def _normalize_providers(self) -> "LLMConfig":
@@ -172,6 +174,7 @@ class LLMConfig(BaseModel):
             "deepseek": "DeepSeek",
             "groq": "Groq",
             "openrouter": "OpenRouter",
+            "ollama": "Ollama (local)",
         }
         return labels.get(provider, provider.title() or "AI Provider")
 
@@ -244,6 +247,12 @@ class BotConfig(BaseModel):
     schedule: ScheduleConfig = ScheduleConfig()
 
 
+class SyncConfig(BaseModel):
+    """Settings for importing jobs from a remote Job Hunter server."""
+    sync_server_url: str = ""
+    sync_token: str = ""
+
+
 class AppConfig(BaseModel):
     profile: UserProfile
     search_criteria: SearchCriteria
@@ -251,6 +260,7 @@ class AppConfig(BaseModel):
     llm: LLMConfig = LLMConfig()
     resume_reuse: ResumeReuseConfig = ResumeReuseConfig()
     latex: LatexConfig = LatexConfig()
+    sync: SyncConfig = SyncConfig()
     company_blacklist: list[str] = []
     version: str = "2.0"
 

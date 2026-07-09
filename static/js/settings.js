@@ -24,6 +24,7 @@ const LLM_DEFAULT_MODELS = {
   deepseek: 'deepseek-chat',
   groq: 'llama-3.3-70b-versatile',
   openrouter: 'meta-llama/llama-3.3-70b-instruct:free',
+  ollama: 'llama3.2',
 };
 
 const LLM_PROVIDER_LABELS = {
@@ -33,6 +34,7 @@ const LLM_PROVIDER_LABELS = {
   deepseek: 'DeepSeek',
   groq: 'Groq',
   openrouter: 'OpenRouter',
+  ollama: 'Ollama (local)',
 };
 
 let llmProviders = [];
@@ -96,6 +98,12 @@ export async function loadSettings() {
     _renderLLMProviders();
     _clearLLMForm();
     onLLMProviderChange();
+    document.getElementById('set-ollama-fallback').checked = !!llm.ollama_fallback_enabled;
+    document.getElementById('set-ollama-model').value = llm.ollama_model || '';
+
+    const sync = cfg.sync || {};
+    document.getElementById('set-sync-url').value = sync.sync_server_url || '';
+    document.getElementById('set-sync-token').value = sync.sync_token || '';
 
     setTags('set-titles-tags',    pr.job_titles || []);
     setTags('set-locations-tags', pr.locations || []);
@@ -256,6 +264,12 @@ export async function saveSettings() {
       model:    llmActiveId ? (llmProviders.find(p => p.id === llmActiveId)?.model || '') : document.getElementById('set-llm-model').value,
       providers: llmProviders,
       active_id: llmActiveId,
+      ollama_fallback_enabled: document.getElementById('set-ollama-fallback').checked,
+      ollama_model: document.getElementById('set-ollama-model').value.trim(),
+    },
+    sync: {
+      sync_server_url: document.getElementById('set-sync-url').value.trim(),
+      sync_token: document.getElementById('set-sync-token').value.trim(),
     },
     search_criteria: {
       job_titles:        state.tagInputs['set-titles-tags'] || [],
@@ -500,7 +514,7 @@ export function addLLMProvider() {
     status.style.color = '#f87171';
     return;
   }
-  if (!apiKey) {
+  if (provider !== 'ollama' && !apiKey) {
     status.textContent = t('settings.enter_api_key');
     status.style.color = '#f87171';
     return;
@@ -569,7 +583,11 @@ export async function validateLLMKey() {
   const btn      = document.getElementById('btn-validate-key');
 
   if (!provider) { status.textContent = t('settings.select_provider'); status.style.color = '#f87171'; return; }
-  if (!apiKey)   { status.textContent = t('settings.enter_api_key'); status.style.color = '#f87171'; return; }
+  if (provider !== 'ollama' && !apiKey) {
+    status.textContent = t('settings.enter_api_key');
+    status.style.color = '#f87171';
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = t('settings.validating');
@@ -579,7 +597,11 @@ export async function validateLLMKey() {
     const res = await fetch('/api/ai/validate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider, api_key: apiKey, model: model || undefined }),
+      body: JSON.stringify({
+        provider,
+        api_key: apiKey || 'ollama',
+        model: model || undefined,
+      }),
     });
     const data = await res.json();
     if (data.valid) {
@@ -805,5 +827,69 @@ export function initProfileImportButtons() {
       'profile-import-preview',
       'profile-import-actions',
     );
+  }
+}
+
+export async function testSyncConnection() {
+  const status = document.getElementById('sync-import-status');
+  const btn = document.getElementById('btn-test-sync');
+  setButtonLoading(btn, true);
+  status.textContent = t('settings.sync_testing');
+  status.style.color = 'var(--text-dim)';
+  try {
+    await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sync: {
+          sync_server_url: document.getElementById('set-sync-url').value.trim(),
+          sync_token: document.getElementById('set-sync-token').value.trim(),
+        },
+      }),
+    });
+    const res = await fetch('/api/sync/test', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || t('settings.sync_failed'));
+    status.textContent = t('settings.sync_ok');
+    status.style.color = '#34d399';
+  } catch (e) {
+    status.textContent = e.message || t('settings.sync_failed');
+    status.style.color = '#f87171';
+  } finally {
+    setButtonLoading(btn, false);
+  }
+}
+
+export async function importJobsFromServer() {
+  const status = document.getElementById('sync-import-status');
+  const btn = document.getElementById('btn-import-jobs');
+  setButtonLoading(btn, true);
+  showLoading(t('settings.sync_importing'));
+  status.textContent = '';
+  try {
+    await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sync: {
+          sync_server_url: document.getElementById('set-sync-url').value.trim(),
+          sync_token: document.getElementById('set-sync-token').value.trim(),
+        },
+      }),
+    });
+    const res = await fetch('/api/sync/import', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || t('settings.sync_failed'));
+    status.textContent = t('settings.sync_import_result', {
+      imported: data.imported || 0,
+      skipped: data.skipped || 0,
+    });
+    status.style.color = '#34d399';
+  } catch (e) {
+    status.textContent = e.message || t('settings.sync_failed');
+    status.style.color = '#f87171';
+  } finally {
+    hideLoading();
+    setButtonLoading(btn, false);
   }
 }

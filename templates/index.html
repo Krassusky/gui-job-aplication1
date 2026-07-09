@@ -1324,11 +1324,25 @@
               <option value="deepseek">DeepSeek</option>
               <option value="groq">Groq (free tier)</option>
               <option value="openrouter">OpenRouter (free models)</option>
+              <option value="ollama">Ollama (local)</option>
             </select>
           </div>
           <div class="form-group">
             <label>Model <span style="font-size:.75rem;color:var(--text-dim)">(optional, uses default if blank)</span></label>
             <input type="text" class="form-control" id="set-llm-model" placeholder="e.g. claude-sonnet-4-20250514" data-i18n-placeholder="placeholder.model">
+          </div>
+        </div>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label data-i18n="settings.label_ollama_model">Ollama model (fallback)</label>
+            <input type="text" class="form-control" id="set-ollama-model" placeholder="llama3.2">
+          </div>
+          <div class="form-group flex items-center gap-md" style="padding-top:28px;">
+            <label class="toggle-switch" for="set-ollama-fallback">
+              <input type="checkbox" id="set-ollama-fallback" role="switch">
+              <span class="slider" aria-hidden="true"></span>
+            </label>
+            <span style="font-size:.9rem;" data-i18n="settings.ollama_fallback">Fall back to local Ollama on rate limit or API errors</span>
           </div>
         </div>
         <div class="form-group">
@@ -1510,6 +1524,27 @@
             </div>
           </div>
         </details>
+
+        <hr style="border:none; border-top:1px solid var(--border); margin:8px 0;">
+        <h3 data-i18n="settings.section_job_sync">Import Jobs from Home Server</h3>
+        <p style="font-size:.85rem;color:var(--text-dim);margin-bottom:12px;" data-i18n="settings.job_sync_hint">
+          Connect to your Ubuntu Job Hunter server (via Tailscale or LAN) to import discovered jobs for review and apply on this Mac.
+        </p>
+        <div class="settings-grid">
+          <div class="form-group">
+            <label data-i18n="settings.label_sync_url">Sync server URL</label>
+            <input type="url" class="form-control" id="set-sync-url" placeholder="http://100.x.x.x:8765">
+          </div>
+          <div class="form-group">
+            <label data-i18n="settings.label_sync_token">Sync token</label>
+            <input type="password" class="form-control" id="set-sync-token" placeholder="shared secret">
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="testSyncConnection()" id="btn-test-sync" data-i18n="settings.test_sync">Test connection</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="importJobsFromServer()" id="btn-import-jobs" data-i18n="settings.import_jobs">Import pending jobs</button>
+        </div>
+        <span id="sync-import-status" style="font-size:.8rem;display:block;"></span>
 
         <hr style="border:none; border-top:1px solid var(--border); margin:8px 0;">
         <h3 data-i18n="settings.section_schedule">Schedule</h3>

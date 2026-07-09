@@ -4,6 +4,14 @@ All notable changes to AutoApply are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.8] - 2026-07-08
+
+### Added
+- **Split architecture (Phase 1)**: Job Hunter worker for 24/7 headless search; sync API to share finds with Mac client.
+- **Mac sync import**: Settings → Import Jobs from Home Server (URL + token).
+- **Ollama provider** with cloud-to-local fallback when API quota or network fails.
+- **Guilherme preset pack**: Pre-filled profile, CV, experience files, and setup scripts.
+
 ## [1.0.7] - 2026-07-08
 
 ### Added

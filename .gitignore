@@ -31,11 +31,13 @@ profile/resumes/
 profile/cover_letters/
 JobApplyAssistant-*.zip
 JobApplyAssistant-Windows.zip
+guilherme-setup.zip
 
 # Environment / secrets
 .env
 *.pem
 *.key
+presets/guilherme-menegatti/secrets.env
 
 # Test / Coverage
 .coverage

@@ -3,13 +3,15 @@
 Implements: FR-031 (AI availability check), FR-032 (document generation),
             FR-074 (multi-provider LLM).
 
-Supports Anthropic, OpenAI, Google (Gemini), and DeepSeek as providers.
+Supports Anthropic, OpenAI, Google (Gemini), DeepSeek, Groq, OpenRouter, and Ollama as providers.
+Falls back to local Ollama when cloud limits are hit (if enabled).
 Falls back to static templates when no API key is configured.
 """
 
 from __future__ import annotations
 
 import logging
+import os
 import time
 from datetime import datetime
 from pathlib import Path
@@ -26,7 +28,13 @@ DEFAULT_MODELS = {
     "deepseek": "deepseek-chat",
     "groq": "llama-3.3-70b-versatile",
     "openrouter": "meta-llama/llama-3.3-70b-instruct:free",
+    "ollama": "llama3.2",
 }
+
+OLLAMA_BASE_URL = os.environ.get("AUTOAPPLY_OLLAMA_BASE_URL", "http://127.0.0.1:11434").rstrip("/")
+
+# HTTP status codes that trigger fallback to local Ollama
+FALLBACK_STATUS_CODES = {401, 402, 429}
 
 # API endpoints per provider
 API_ENDPOINTS = {
@@ -183,23 +191,64 @@ Bio / tone preference: {bio}
 """
 
 
+def get_ollama_base_url() -> str:
+    """Return the configured Ollama API base URL."""
+    return OLLAMA_BASE_URL
+
+
+def get_ollama_model(llm_config=None) -> str:
+    """Resolve the Ollama model name from config or defaults."""
+    if llm_config:
+        if getattr(llm_config, "ollama_model", None):
+            return llm_config.ollama_model
+        if llm_config.provider == "ollama" and llm_config.model:
+            return llm_config.model
+    return os.environ.get("AUTOAPPLY_OLLAMA_MODEL", DEFAULT_MODELS["ollama"])
+
+
+def ollama_fallback_enabled(llm_config) -> bool:
+    """Return True when cloud failures should fall back to local Ollama."""
+    if os.environ.get("AUTOAPPLY_OLLAMA_FALLBACK", "").lower() in ("1", "true", "yes"):
+        return True
+    return bool(getattr(llm_config, "ollama_fallback_enabled", False))
+
+
+def check_ollama_available(timeout: int = 3) -> bool:
+    """Ping the local Ollama server."""
+    try:
+        resp = requests.get(f"{get_ollama_base_url()}/api/tags", timeout=timeout)
+        return resp.status_code == 200
+    except (requests.ConnectionError, requests.Timeout):
+        return False
+
+
 def check_ai_available(llm_config) -> bool:
-    """Check if an LLM provider is configured with an API key.
+    """Check if an LLM provider is configured or Ollama is reachable.
 
     Args:
         llm_config: LLMConfig with provider and api_key fields.
 
     Returns:
-        True if provider and api_key are set, False otherwise.
+        True if a cloud provider has an API key, Ollama is the active provider,
+        or Ollama fallback is enabled and the local server responds.
     """
     if not llm_config:
-        return False
+        return check_ollama_available()
     active = getattr(llm_config, "get_active_entry", None)
     if callable(active):
         entry = llm_config.get_active_entry()
         if entry:
-            return bool(entry.provider and entry.api_key)
-    return bool(llm_config.provider and llm_config.api_key)
+            if entry.provider == "ollama":
+                return check_ollama_available()
+            if entry.provider and entry.api_key:
+                return True
+    if llm_config.provider == "ollama":
+        return check_ollama_available()
+    if llm_config.provider and llm_config.api_key:
+        return True
+    if ollama_fallback_enabled(llm_config) and check_ollama_available():
+        return True
+    return False
 
 
 class APIKeyValidationResult:
@@ -265,6 +314,14 @@ def validate_api_key(
         APIKeyValidationResult with validity, message, and error_code.
     """
     model = model or DEFAULT_MODELS.get(provider, "")
+    if provider == "ollama":
+        if check_ollama_available():
+            return APIKeyValidationResult(True, "Ollama server is reachable", "ok")
+        return APIKeyValidationResult(
+            False,
+            f"Cannot reach Ollama at {get_ollama_base_url()}",
+            "provider_error",
+        )
     try:
         _call_llm(provider, api_key, model, "Reply with OK", timeout=15)
         return APIKeyValidationResult(True, "API key is valid", "ok")
@@ -310,11 +367,15 @@ def _call_llm(
             return _call_anthropic(api_key, model, prompt, timeout)
         elif provider == "google":
             return _call_google(api_key, model, prompt, timeout)
+        elif provider == "ollama":
+            return _call_ollama(model, prompt, timeout)
         elif provider in ("openai", "deepseek", "groq", "openrouter"):
             return _call_openai_compatible(provider, api_key, model, prompt, timeout)
         raise RuntimeError(f"Unsupported LLM provider: {provider}")
 
-    if provider not in ("anthropic", "google", "openai", "deepseek", "groq", "openrouter"):
+    if provider not in (
+        "anthropic", "google", "openai", "deepseek", "groq", "openrouter", "ollama",
+    ):
         raise RuntimeError(f"Unsupported LLM provider: {provider}")
 
     last_error: Exception | None = None
@@ -416,6 +477,42 @@ def _call_google(api_key: str, model: str, prompt: str, timeout: int) -> str:
     return str(data["candidates"][0]["content"]["parts"][0]["text"]).strip()
 
 
+def _call_ollama(model: str, prompt: str, timeout: int) -> str:
+    """Call a local Ollama server via its generate API."""
+    resp = requests.post(
+        f"{get_ollama_base_url()}/api/generate",
+        json={
+            "model": model,
+            "prompt": prompt,
+            "stream": False,
+        },
+        timeout=timeout,
+    )
+    if resp.status_code != 200:
+        _raise_api_error("Ollama", resp)
+    data = resp.json()
+    return str(data.get("response", "")).strip()
+
+
+def _extract_status_code(error: Exception) -> int | None:
+    """Parse an HTTP status code from a RuntimeError message."""
+    msg = str(error)
+    for code in (*FALLBACK_STATUS_CODES, 400, 403, 404, 500, 502, 503, 504):
+        if f"({code})" in msg:
+            return code
+    return None
+
+
+def _should_fallback_to_ollama(error: Exception) -> bool:
+    """Return True when a cloud provider error should trigger Ollama fallback."""
+    code = _extract_status_code(error)
+    if code in FALLBACK_STATUS_CODES:
+        return True
+    if code is None and isinstance(error, (requests.ConnectionError, requests.Timeout)):
+        return True
+    return False
+
+
 def _raise_api_error(provider: str, resp: requests.Response) -> None:
     """Extract error message from API response and raise RuntimeError."""
     try:
@@ -429,30 +526,64 @@ def _raise_api_error(provider: str, resp: requests.Response) -> None:
     raise RuntimeError(f"{provider} API error ({resp.status_code}): {msg}")
 
 
-def invoke_llm(prompt: str, llm_config, timeout_seconds: int = 120) -> str:
-    """Generate text using the configured LLM provider.
+def invoke_llm_with_fallback(
+    prompt: str,
+    llm_config,
+    timeout_seconds: int = 120,
+    *,
+    allow_fallback: bool | None = None,
+) -> str:
+    """Generate text using the configured provider, optionally falling back to Ollama.
 
-    Args:
-        prompt: Full prompt text.
-        llm_config: LLMConfig with provider, api_key, model fields.
-        timeout_seconds: Maximum wait time (default 120s).
-
-    Returns:
-        Generated text content.
-
-    Raises:
-        RuntimeError: If no API key is configured or the API call fails.
+    Tries the configured cloud provider first. On rate-limit, auth, balance errors,
+    or network failure, falls back to local Ollama when enabled.
     """
-    if not llm_config or not llm_config.api_key:
+    if not llm_config:
         raise RuntimeError(
             "No AI provider configured. Add an API key in Settings → AI Provider."
         )
 
-    provider = llm_config.provider
-    api_key = llm_config.api_key
+    provider = llm_config.provider or ""
+    api_key = llm_config.api_key or ""
     model = llm_config.model or DEFAULT_MODELS.get(provider, "")
 
-    return _call_llm(provider, api_key, model, prompt, timeout_seconds)
+    if provider == "ollama":
+        ollama_model = get_ollama_model(llm_config)
+        return _call_llm("ollama", "", ollama_model, prompt, timeout_seconds)
+
+    if not api_key:
+        if ollama_fallback_enabled(llm_config) and check_ollama_available():
+            logger.warning("No cloud API key configured; using Ollama fallback")
+            ollama_model = get_ollama_model(llm_config)
+            return _call_llm("ollama", "", ollama_model, prompt, timeout_seconds)
+        raise RuntimeError(
+            "No AI provider configured. Add an API key in Settings → AI Provider."
+        )
+
+    use_fallback = (
+        ollama_fallback_enabled(llm_config) if allow_fallback is None else allow_fallback
+    )
+
+    try:
+        return _call_llm(provider, api_key, model, prompt, timeout_seconds)
+    except Exception as e:
+        if not use_fallback or not _should_fallback_to_ollama(e):
+            raise
+        if not check_ollama_available():
+            logger.error("Cloud LLM failed and Ollama is not reachable")
+            raise
+        logger.warning(
+            "Cloud LLM failed (%s); falling back to Ollama at %s",
+            e,
+            get_ollama_base_url(),
+        )
+        ollama_model = get_ollama_model(llm_config)
+        return _call_llm("ollama", "", ollama_model, prompt, timeout_seconds)
+
+
+def invoke_llm(prompt: str, llm_config, timeout_seconds: int = 120) -> str:
+    """Generate text using the configured LLM provider (with optional Ollama fallback)."""
+    return invoke_llm_with_fallback(prompt, llm_config, timeout_seconds)
 
 
 def read_all_experience_files(experience_dir: Path) -> str:

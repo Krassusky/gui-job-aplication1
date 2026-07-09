@@ -1,0 +1,101 @@
+{
+  "profile": {
+    "first_name": "Guilherme",
+    "last_name": "Menegatti",
+    "email": "menegattigui@gmail.com",
+    "phone_country_code": "+52",
+    "phone": "5587964486",
+    "address_line1": "",
+    "address_line2": "",
+    "city": "Mexico City",
+    "state": "CDMX",
+    "zip_code": "",
+    "country": "Mexico",
+    "bio": "Transformation Manager with 15+ years leading multinational operations, process improvement, knowledge management, and GBS transformation across the Americas. Fluent in Portuguese, English, and Spanish.",
+    "linkedin_url": "https://www.linkedin.com/in/guilhermemenegatti/",
+    "portfolio_url": null,
+    "fallback_resume_path": "__AUTOAPPLY_DIR__/default_resume.docx",
+    "screening_answers": {},
+    "spoken_languages": [
+      {"code": "pt", "level": "native"},
+      {"code": "en", "level": "fluent"},
+      {"code": "es", "level": "fluent"}
+    ]
+  },
+  "search_criteria": {
+    "job_titles": [
+      "Transformation Manager",
+      "Process Improvement Manager",
+      "Knowledge Manager",
+      "Project Manager",
+      "GBS Manager",
+      "Operations Manager",
+      "Business Transformation Lead"
+    ],
+    "locations": [
+      "Mexico City, Mexico",
+      "Remote",
+      "Mexico",
+      "Latin America"
+    ],
+    "remote_only": false,
+    "salary_min": null,
+    "keywords_include": [
+      "transformation",
+      "process improvement",
+      "knowledge management",
+      "GBS",
+      "project management"
+    ],
+    "keywords_exclude": [],
+    "experience_levels": ["mid", "senior"],
+    "job_languages": ["pt", "en", "es"]
+  },
+  "bot": {
+    "enabled_platforms": ["linkedin"],
+    "min_match_score": 75,
+    "max_applications_per_day": 10,
+    "delay_between_applications_seconds": 90,
+    "search_interval_seconds": 1800,
+    "apply_mode": "review",
+    "watch_mode": false,
+    "cover_letter_enabled": true,
+    "cover_letter_template": "",
+    "schedule": {
+      "enabled": true,
+      "days_of_week": ["mon", "tue", "wed", "thu", "fri"],
+      "start_time": "09:00",
+      "end_time": "18:00"
+    }
+  },
+  "llm": {
+    "provider": "groq",
+    "api_key": "__GROQ_API_KEY__",
+    "model": "llama-3.3-70b-versatile",
+    "providers": [
+      {
+        "id": "7c4f2a10-9b3e-4d5f-a6c7-8e9f0a1b2c3d",
+        "label": "Groq main",
+        "provider": "groq",
+        "api_key": "__GROQ_API_KEY__",
+        "model": "llama-3.3-70b-versatile"
+      }
+    ],
+    "active_id": "7c4f2a10-9b3e-4d5f-a6c7-8e9f0a1b2c3d"
+  },
+  "resume_reuse": {
+    "enabled": true,
+    "min_score": 0.0,
+    "min_experience_bullets": 6,
+    "scoring_method": "auto",
+    "cover_letter_strategy": "generate"
+  },
+  "latex": {
+    "template": "modern",
+    "font_family": "helvetica",
+    "font_size": 11,
+    "margin": "0.75in"
+  },
+  "company_blacklist": [],
+  "version": "2.0"
+}
