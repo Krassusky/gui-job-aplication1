@@ -53,10 +53,10 @@ Se o Mac bloquear na primeira abertura:
 Não precisa do Google Chrome — no Mac usamos o motor Safari integrado.
 
 Download atualizado (Guilherme — perfil pré-preenchido):
-https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.10
+https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.11
 
 Já instalado? No app: Configurações → Updates → Check for updates → Update now
-(dados em ~/.autoapply/ não são apagados)
+(dados em ~/.autoapply/ não são apagados; o app reinicia sozinho e cria atalho na Área de Trabalho)
 
 Guia completo com comandos do Terminal:
   INSTALACAO-MAC-GUILHERME.md (dentro do zip)

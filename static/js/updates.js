@@ -172,9 +172,12 @@ export async function installUpdate(skipConfirm = false) {
       throw new Error(data.error || t('updates.install_failed'));
     }
     hideUpdateBanner();
+    setUpdateMessage(t('updates.installing'), 'info');
+    setBannerText(t('updates.installing'));
+    // Backend also schedules quit; call shutdown so the helper can replace the .app.
     setTimeout(() => {
       fetch('/api/shutdown', { method: 'POST' }).catch(() => {});
-    }, 800);
+    }, 500);
   } catch (e) {
     _updateRunning = false;
     _autoInstallWhenReady = false;

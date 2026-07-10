@@ -134,3 +134,61 @@ class TestUpdater:
         res = client.post("/api/updates/check")
         assert res.status_code == 200
         assert res.get_json()["update_available"] is False
+
+    def test_write_macos_updater_waits_and_installs_to_applications(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(updater, "get_data_dir", lambda: tmp_path)
+        install_app = tmp_path / "Downloads" / "JobApplyAssistant.app"
+        source_app = tmp_path / "extract" / "JobApplyAssistant.app"
+        source_app.mkdir(parents=True)
+        script = updater._write_macos_updater(install_app, source_app, app_pid=4242)
+        text = script.read_text(encoding="utf-8")
+        assert 'APP_PID="4242"' in text
+        assert "/Applications/JobApplyAssistant.app" in text
+        assert "kill -0" in text
+        assert "kill -9" in text
+        assert "ditto" in text
+        assert "Desktop" in text
+        assert "osascript" in text
+        assert 'open "$TARGET_APP"' in text
+        assert "apply_update_mac.log" in text
+
+    def test_apply_update_and_restart_darwin(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(updater, "get_data_dir", lambda: tmp_path)
+        monkeypatch.setattr(updater.sys, "platform", "darwin")
+
+        install_app = tmp_path / "JobApplyAssistant.app"
+        mac_bin = install_app / "Contents" / "MacOS"
+        mac_bin.mkdir(parents=True)
+        (mac_bin / "JobApplyAssistant").write_text("bin", encoding="utf-8")
+
+        extract = tmp_path / "updates" / "extract-1.0.11"
+        source_app = extract / "JobApplyAssistant.app"
+        src_bin = source_app / "Contents" / "MacOS"
+        src_bin.mkdir(parents=True)
+        (src_bin / "JobApplyAssistant").write_text("new", encoding="utf-8")
+
+        updater._set_state(latest_version="1.0.11", status="ready", ready=True)
+        monkeypatch.setattr(updater, "get_install_dir", lambda: install_app)
+        monkeypatch.setattr(updater, "_extract_dir_for", lambda _v: extract)
+        monkeypatch.setattr(updater, "_package_has_binary", lambda _p: True)
+        monkeypatch.setattr(updater, "_schedule_self_shutdown", lambda: None)
+
+        pops: list = []
+
+        def fake_popen(*args, **kwargs):
+            pops.append((args, kwargs))
+
+            class _P:
+                pass
+
+            return _P()
+
+        monkeypatch.setattr(updater.subprocess, "Popen", fake_popen)
+        updater.apply_update_and_restart()
+        assert pops, "expected helper script to be launched"
+        cmd = pops[0][0][0]
+        assert cmd[0] == "/bin/bash"
+        script_path = cmd[1]
+        text = open(script_path, encoding="utf-8").read()
+        assert "/Applications/JobApplyAssistant.app" in text
+        assert updater.get_update_state()["status"] == "installing"

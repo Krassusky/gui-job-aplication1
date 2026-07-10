@@ -4,6 +4,11 @@ All notable changes to AutoApply are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.11] - 2026-07-10
+
+### Fixed
+- **macOS in-app update**: Wait for the app to quit, install to `/Applications`, create Desktop alias, then relaunch (download alone no longer left the old version running).
+
 ## [1.0.10] - 2026-07-10
 
 ### Fixed

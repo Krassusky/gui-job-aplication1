@@ -175,16 +175,20 @@ def apply_update_and_restart() -> None:
                 source_app = candidate
             else:
                 raise UpdateError("Update package is missing the macOS app bundle.")
-        sh_path = _write_macos_updater(install_dir, source_app)
-        subprocess.Popen(
-            ["/bin/bash", str(sh_path)],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            close_fds=True,
-        )
+        sh_path = _write_macos_updater(install_dir, source_app, os.getpid())
+        log_path = _updates_dir() / "apply_update_mac.log"
+        with open(log_path, "a", encoding="utf-8") as log_file:
+            subprocess.Popen(
+                ["/bin/bash", str(sh_path)],
+                stdout=log_file,
+                stderr=subprocess.STDOUT,
+                close_fds=True,
+                start_new_session=True,
+            )
     else:
         raise UpdateError("Automatic install is not supported on this platform.")
     _set_state(status="installing", message="Restarting...")
+    _schedule_self_shutdown()
 
 
 def _updates_dir() -> Path:
@@ -353,19 +357,105 @@ del /F /Q "%~f0" >nul 2>&1
     return bat_path
 
 
-def _write_macos_updater(install_app: Path, source_app: Path) -> Path:
-    sh_path = _updates_dir() / "apply_update_mac.sh"
-    content = f"""#!/bin/bash
-set -euo pipefail
-TARGET_APP="{install_app}"
-SOURCE_APP="{source_app}"
+def _schedule_self_shutdown(delay_seconds: float = 1.0) -> None:
+    """Quit this process so the updater helper can replace the app bundle."""
 
-sleep 2
-rm -rf "$TARGET_APP"
-cp -R "$SOURCE_APP" "$TARGET_APP"
-xattr -dr com.apple.quarantine "$TARGET_APP" >/dev/null 2>&1 || true
-open "$TARGET_APP"
+    def _shutdown() -> None:
+        import signal
+        import time
+
+        time.sleep(delay_seconds)
+        try:
+            from app import graceful_shutdown
+
+            graceful_shutdown()
+        except Exception as e:
+            logger.debug("Graceful shutdown before update failed: %s", e)
+        try:
+            os.kill(os.getpid(), signal.SIGTERM)
+        except Exception as e:
+            logger.debug("SIGTERM before update failed: %s", e)
+
+    threading.Thread(target=_shutdown, daemon=True, name="update-shutdown").start()
+
+
+def _write_macos_updater(install_app: Path, source_app: Path, app_pid: int) -> Path:
+    """Write a helper that waits for quit, installs to Applications, aliases Desktop, relaunches."""
+    sh_path = _updates_dir() / "apply_update_mac.sh"
+    log_path = _updates_dir() / "apply_update_mac.log"
+    # Always use POSIX path — this script only runs on macOS.
+    applications_app = "/Applications/JobApplyAssistant.app"
+    content = f"""#!/bin/bash
+set -uo pipefail
+APP_PID="{app_pid}"
+SOURCE_APP="{source_app}"
+RUNNING_APP="{install_app}"
+TARGET_APP="{applications_app}"
+LOG_FILE="{log_path}"
+DESKTOP="${{HOME}}/Desktop"
+
+log() {{
+  echo "$(date '+%Y-%m-%d %H:%M:%S') $*" | tee -a "$LOG_FILE"
+}}
+
+log "Updater started (pid=$$). Waiting for app pid=$APP_PID to exit."
+
+# Wait for the running app to quit so the .app bundle is unlocked.
+for i in $(seq 1 60); do
+  if ! kill -0 "$APP_PID" 2>/dev/null; then
+    log "App pid $APP_PID exited."
+    break
+  fi
+  sleep 1
+done
+
+if kill -0 "$APP_PID" 2>/dev/null; then
+  log "App still running; sending TERM."
+  kill "$APP_PID" 2>/dev/null || true
+  sleep 3
+fi
+if kill -0 "$APP_PID" 2>/dev/null; then
+  log "App still running; sending KILL."
+  kill -9 "$APP_PID" 2>/dev/null || true
+  sleep 1
+fi
+
+replace_app() {{
+  local dest="$1"
+  log "Installing to $dest"
+  rm -rf "$dest"
+  if command -v ditto >/dev/null 2>&1; then
+    ditto "$SOURCE_APP" "$dest"
+  else
+    cp -R "$SOURCE_APP" "$dest"
+  fi
+  xattr -dr com.apple.quarantine "$dest" >/dev/null 2>&1 || true
+  if [[ -f "$dest/Contents/MacOS/JobApplyAssistant" ]]; then
+    chmod +x "$dest/Contents/MacOS/JobApplyAssistant" || true
+  fi
+}}
+
+replace_app "$TARGET_APP"
+
+# If the user was running from another location (e.g. Downloads), replace that too.
+if [[ "$RUNNING_APP" != "$TARGET_APP" && -e "$RUNNING_APP" ]]; then
+  replace_app "$RUNNING_APP" || log "Could not replace running copy at $RUNNING_APP"
+fi
+
+# Desktop alias (best-effort; do not fail the update).
+if [[ -d "$DESKTOP" ]]; then
+  log "Creating Desktop alias"
+  rm -f "$DESKTOP/JobApplyAssistant" "$DESKTOP/JobApply Assistant" 2>/dev/null || true
+  # Remove previous Finder aliases named like the app (best-effort).
+  find "$DESKTOP" -maxdepth 1 \\( -name 'JobApplyAssistant*' -o -name 'Job Apply Assistant*' \\) -exec rm -rf {{}} + 2>/dev/null || true
+  osascript -e "tell application \\"Finder\\" to make alias file at POSIX file \\"$DESKTOP\\" to POSIX file \\"$TARGET_APP\\"" \\
+    >>"$LOG_FILE" 2>&1 || log "Desktop alias creation failed (non-fatal)"
+fi
+
+log "Launching $TARGET_APP"
+open "$TARGET_APP" || open -a "$TARGET_APP" || log "Failed to open updated app"
 rm -f "$0"
+log "Updater finished."
 """
     sh_path.write_text(content, encoding="utf-8")
     try:

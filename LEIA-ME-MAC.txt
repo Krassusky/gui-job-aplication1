@@ -3,11 +3,11 @@ JobApply Assistant — Guia rápido (macOS)
 
 DOWNLOAD
 --------
-Baixe a versão **1.0.10** (Guilherme — perfil pré-preenchido) em:
-https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.10
+Baixe a versão **1.0.11** (Guilherme — perfil pré-preenchido) em:
+https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.11
 
 Já instalado? Configurações → Updates → Check for updates → Update now
-(dados em ~/.autoapply/ não são apagados)
+(dados em ~/.autoapply/ não são apagados; o app reinicia sozinho e cria atalho na Área de Trabalho)
 
 Guia completo com comandos do Terminal (obrigatório se o duplo clique falhar):
   INSTALACAO-MAC-GUILHERME.md (vem dentro do .zip)

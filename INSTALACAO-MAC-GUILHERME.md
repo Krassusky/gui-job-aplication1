@@ -1,10 +1,10 @@
-# Job Apply Assistant — Instalação macOS (Guilherme) v1.0.10
+# Job Apply Assistant — Instalação macOS (Guilherme) v1.0.11
 
-Este guia é para instalar a **versão 1.0.10** no Mac do Guilherme.  
+Este guia é para instalar a **versão 1.0.11** no Mac do Guilherme.  
 Nesta build, **perfil, currículo, experiências e chave Groq** são aplicados automaticamente na **primeira abertura**.
 
 > **Já tem o app instalado?** Abra **Configurações → Updates → Check for updates → Update now**.  
-> Os dados em `~/.autoapply/` (incluindo vagas importadas) **não são apagados**.
+> O app **reinicia sozinho**, instala em **Aplicativos**, cria atalho na **Área de Trabalho**, e **não apaga** `~/.autoapply/` (incluindo vagas importadas).
 
 > **Importante:** no Mac, apps baixados da internet costumam ficar bloqueados.  
 > Se o duplo clique não abrir, use os comandos do Terminal abaixo (é o método mais confiável).
@@ -15,12 +15,12 @@ Nesta build, **perfil, currículo, experiências e chave Groq** são aplicados a
 
 Baixe o zip **mac-arm64** (Mac com chip M1/M2/M3/M4):
 
-https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.10
+https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.11
 
 Arquivo esperado:
 
 ```text
-JobApplyAssistant-1.0.10-mac-arm64.zip
+JobApplyAssistant-1.0.11-mac-arm64.zip
 ```
 
 ---
@@ -38,8 +38,8 @@ Copie e cole **linha por linha** (ajuste o caminho se o zip estiver em outra pas
 
 ```bash
 cd ~/Downloads
-unzip -o JobApplyAssistant-1.0.10-mac-arm64.zip -d JobApplyAssistant-1.0.10
-cd JobApplyAssistant-1.0.10
+unzip -o JobApplyAssistant-1.0.11-mac-arm64.zip -d JobApplyAssistant-1.0.11
+cd JobApplyAssistant-1.0.11
 ls -la
 ```
 
@@ -168,6 +168,7 @@ Seus dados em `~/.autoapply/autoapply.db` **não são apagados** ao atualizar o 
 1. Abra o app → **Configurações → Updates**
 2. **Check for updates** → **Update now** (ou Download + Install and restart)
 3. Se aparecer um banner no topo, use **Atualizar agora**
+4. O app fecha, instala em **Aplicativos**, cria atalho na **Área de Trabalho** e reabre sozinho
 
 Seus dados em `~/.autoapply/` **não são apagados** ao atualizar.
 
