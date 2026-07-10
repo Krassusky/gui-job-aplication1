@@ -11,12 +11,12 @@ import { state } from './state.js';
 import { initSocket } from './socket.js';
 import { initTagInputs, addTag, addTagFromInput, removeTag } from './tag-input.js';
 import { initFileUpload } from './file-upload.js';
-import { initNavTabs, showApp, switchScreen } from './navigation.js';
+import { initNavTabs, showApp, switchScreen, detectClientMode } from './navigation.js';
 import { showWizard, setWizardStep, wizardNext, wizardPrev, wizardFinish, wizardRefreshFiles, wizardImportFromCV, wizardImportFromLinkedIn, wizardImportLinkedInZip, wizardValidateLLMKey } from './wizard.js';
 import { maybeShowShortcutsPrompt } from './shortcuts.js';
 import { botControl } from './bot-control.js';
 import { clearFeed } from './feed.js';
-import { debounceSearch, loadApplications, goAppPage, updateAppStatus, updateAppNotes, viewCoverLetter, viewApplicationDetail, updateDetailStatus, saveDetailNotes, exportCSV } from './applications.js';
+import { debounceSearch, loadApplications, goAppPage, updateAppStatus, updateAppNotes, viewCoverLetter, viewApplicationDetail, updateDetailStatus, saveDetailNotes, exportCSV, generateApplicationMaterials, applyToApplication } from './applications.js';
 import { loadProfileFiles, showFileModal, editFile, saveFile, confirmDeleteFile } from './profile.js';
 import { loadSettings, saveSettings, updateScheduleUI, changeApplyMode, initBotToggles, uploadDefaultResume, removeDefaultResume, loadDefaultResume, onLLMProviderChange, validateLLMKey, onLocaleChange, addLLMProvider, removeLLMProvider, setActiveLLMProvider, editLLMProvider, importFromCV, importFromLinkedIn, importLinkedInZip, applyImportedProfile, clearProfileImport, initProfileImportButtons, testSyncConnection, importJobsFromServer } from './settings.js';
 import { reviewApprove, reviewEdit, reviewManualSubmit, reviewSkip } from './review.js';
@@ -62,6 +62,8 @@ window.viewCoverLetter = viewCoverLetter;
 window.viewApplicationDetail = viewApplicationDetail;
 window.updateDetailStatus = updateDetailStatus;
 window.saveDetailNotes = saveDetailNotes;
+window.generateApplicationMaterials = generateApplicationMaterials;
+window.applyToApplication = applyToApplication;
 window.exportCSV = exportCSV;
 window.showFileModal = showFileModal;
 window.editFile = editFile;
@@ -196,6 +198,12 @@ function initAccessibility() {
     const detailCoverBtn = e.target.closest('[data-detail-cover-id]');
     if (detailCoverBtn) { viewCoverLetter(detailCoverBtn.dataset.detailCoverId); return; }
 
+    // Detail modal: generate CV / apply
+    const generateBtn = e.target.closest('[data-generate-id]');
+    if (generateBtn) { generateApplicationMaterials(generateBtn.dataset.generateId); return; }
+    const applyBtn = e.target.closest('[data-apply-id]');
+    if (applyBtn) { applyToApplication(applyBtn.dataset.applyId); return; }
+
     // Profile: edit file
     const editBtn = e.target.closest('[data-edit-file]');
     if (editBtn) { editFile(editBtn.dataset.editFile); return; }
@@ -226,7 +234,6 @@ function initAccessibility() {
    ═══════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', async () => {
   initTagInputs();
-  initNavTabs();
   initFileUpload();
   initSocket();
   initAccessibility();
@@ -242,17 +249,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     const res = await fetch('/api/setup/status');
     const data = await res.json();
     state.aiAvailable = !!data.ai_available;
+    state.clientMode = !!data.client_mode;
     updateAIIndicators();
     const banner = document.getElementById('ai-warning-banner');
     if (banner) banner.classList.toggle('hidden', state.aiAvailable);
 
-    if (data.is_first_run) {
+    initNavTabs();
+
+    if (data.is_first_run && !state.clientMode) {
       showWizard(data);
     } else {
       showApp();
     }
   } catch (e) {
     console.warn('Could not reach setup API, showing app:', e);
+    await detectClientMode();
+    initNavTabs();
     showApp();
   } finally {
     hideAppBootLoader();

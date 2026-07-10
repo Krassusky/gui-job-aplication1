@@ -44,4 +44,5 @@ VALID_APP_STATUSES = {
     "applied", "manual_required", "error", "skipped", "saved",
     "reviewed", "interview", "interviewed", "interviewing",
     "rejected", "accepted", "withdrawn", "offer",
+    "discovered", "pending_sync", "synced",
 }

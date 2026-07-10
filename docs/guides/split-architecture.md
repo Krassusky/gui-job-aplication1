@@ -119,10 +119,23 @@ Restart=on-failure
 WantedBy=multi-user.target
 ```
 
-## 2. Tailscale / LAN networking
+## 2. Networking (pick one)
 
-1. Install [Tailscale](https://tailscale.com/) on Ubuntu and Mac (same tailnet).
-2. Note the Ubuntu machine's Tailscale IP (e.g. `100.x.x.x`).
+### Option A — Cloudflare Tunnel + domain (recommended for remote Mac)
+
+See [cloudflare-jobs-tunnel.md](./cloudflare-jobs-tunnel.md).
+
+Summary:
+
+1. Job Hunter on Windows (`:8765`)
+2. SSH reverse tunnel Windows → Ubuntu `localhost:8765` (or cloudflared on Windows)
+3. Cloudflare public hostname `jobs.krassusky.com` → `http://localhost:8765`
+4. Mac sync URL: `https://jobs.krassusky.com`
+
+### Option B — Tailscale / LAN
+
+1. Install [Tailscale](https://tailscale.com/) on hunter and Mac (same tailnet).
+2. Note the hunter Tailscale IP (e.g. `100.x.x.x`).
 3. From Mac, verify: `curl http://100.x.x.x:8765/api/sync/health`
 4. Mac client sync URL: `http://100.x.x.x:8765`
 
@@ -133,8 +146,8 @@ Firewall: allow inbound TCP on port `8765` on the hunter (or use Tailscale ACLs)
 1. Install and run AutoApply normally (`python run.py` or packaged app).
 2. Open **Settings → Import Jobs from Home Server**.
 3. Set:
-   - **Sync server URL**: `http://<ubuntu-tailscale-ip>:8765`
-   - **Sync token**: same value as `AUTOAPPLY_SYNC_TOKEN` on Ubuntu
+   - **Sync server URL**: `https://jobs.krassusky.com` (Cloudflare) **or** `http://<tailscale-ip>:8765`
+   - **Sync token**: same value as `AUTOAPPLY_SYNC_TOKEN` on the hunter
 4. Click **Test connection**, then **Import pending jobs**.
 
 Imported jobs appear in **Applications** with status `discovered` for review/apply. The Mac acks each job on the hunter so it is not re-imported.

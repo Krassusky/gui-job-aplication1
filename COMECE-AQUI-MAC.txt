@@ -39,6 +39,13 @@ Você só precisa fazer uma vez:
   - Settings → Platform Login → LinkedIn (e-mail/senha, não Google)
   - Settings → Import Jobs from Home Server (URL + token do PC de casa)
 
+Depois do import:
+  - Abra Candidaturas → clique na vaga → Generate Resume → Apply to This Job
+  - Revise a carta e aprove
+
+Abas neste Mac: Candidaturas, Experiência, Dados, Configurações
+(Painel/busca fica no PC Windows)
+
 Se o Mac bloquear na primeira abertura:
    - Clique com o botão direito em JobApplyAssistant.app → Abrir → Abrir
    - (só precisa fazer isso uma vez)

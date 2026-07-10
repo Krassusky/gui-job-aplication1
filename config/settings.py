@@ -253,6 +253,11 @@ class SyncConfig(BaseModel):
     sync_token: str = ""
 
 
+class UIConfig(BaseModel):
+    """UI presentation options (Mac apply client vs full hunter desktop)."""
+    client_mode: bool = False
+
+
 class AppConfig(BaseModel):
     profile: UserProfile
     search_criteria: SearchCriteria
@@ -261,12 +266,45 @@ class AppConfig(BaseModel):
     resume_reuse: ResumeReuseConfig = ResumeReuseConfig()
     latex: LatexConfig = LatexConfig()
     sync: SyncConfig = SyncConfig()
+    ui: UIConfig = UIConfig()
     company_blacklist: list[str] = []
     version: str = "2.0"
 
 
 def get_data_dir() -> Path:
     return Path.home() / ".autoapply"
+
+
+def resolve_client_mode(config: AppConfig | None = None) -> bool:
+    """Effective Mac/apply-client UI mode.
+
+    Priority: AUTOAPPLY_CLIENT_MODE env → config.ui.client_mode → Guilherme preset marker.
+    """
+    import os
+
+    env = os.environ.get("AUTOAPPLY_CLIENT_MODE", "").strip().lower()
+    if env in ("1", "true", "yes", "mac", "client"):
+        return True
+    if env in ("0", "false", "no", "full", "desktop"):
+        return False
+
+    if config is None:
+        config = load_config()
+    if config is not None and config.ui.client_mode:
+        return True
+
+    data_dir = get_data_dir()
+    if (data_dir / ".preset-guilherme-menegatti-v1").exists():
+        return True
+
+    try:
+        from presets.bootstrap import get_active_bundled_preset_id
+        if get_active_bundled_preset_id() == "guilherme-menegatti":
+            return True
+    except Exception:
+        pass
+
+    return False
 
 
 def _hydrate_llm_keys_from_keyring(llm: LLMConfig) -> None:

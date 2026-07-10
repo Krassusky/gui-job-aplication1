@@ -260,11 +260,13 @@ class TestApplications:
     """FR-007: Application listing, filtering, updating, export."""
 
     def test_get_applications_empty(self, app_client):
-        """FR-007: Empty DB returns empty list."""
+        """FR-007: Empty DB returns paginated empty payload."""
         client, _db, _tmp = app_client
         resp = client.get("/api/applications")
         assert resp.status_code == 200
-        assert resp.get_json() == []
+        data = resp.get_json()
+        assert data["applications"] == []
+        assert data["total"] == 0
 
     def test_get_applications_with_data(self, app_client):
         """AC-007-1: Returns applications after insert."""
@@ -273,8 +275,9 @@ class TestApplications:
         resp = client.get("/api/applications")
         assert resp.status_code == 200
         data = resp.get_json()
-        assert len(data) == 1
-        assert data[0]["job_title"] == "Engineer"
+        assert data["total"] == 1
+        assert len(data["applications"]) == 1
+        assert data["applications"][0]["job_title"] == "Engineer"
 
     def test_get_applications_filter_status(self, app_client):
         """AC-007-1: Filter by status query param."""
@@ -283,8 +286,60 @@ class TestApplications:
         insert_app(db, external_id="a2", status="rejected")
         resp = client.get("/api/applications?status=rejected")
         data = resp.get_json()
-        assert len(data) == 1
-        assert data[0]["status"] == "rejected"
+        assert data["total"] == 1
+        assert len(data["applications"]) == 1
+        assert data["applications"][0]["status"] == "rejected"
+
+    def test_get_applications_page_per_page(self, app_client):
+        """Frontend contract: page/per_page returns {applications, total}."""
+        client, db, _tmp = app_client
+        for i in range(5):
+            insert_app(db, external_id=f"p{i}", job_title=f"Role {i}")
+        resp = client.get("/api/applications?page=1&per_page=2")
+        data = resp.get_json()
+        assert data["total"] == 5
+        assert data["page"] == 1
+        assert data["per_page"] == 2
+        assert len(data["applications"]) == 2
+        resp2 = client.get("/api/applications?page=3&per_page=2")
+        data2 = resp2.get_json()
+        assert len(data2["applications"]) == 1
+
+    def test_get_applications_discovered_status(self, app_client):
+        """Imported sync jobs with status discovered are listable."""
+        client, db, _tmp = app_client
+        insert_app(db, external_id="d1", status="discovered", job_title="Imported Role")
+        resp = client.get("/api/applications?status=discovered")
+        data = resp.get_json()
+        assert data["total"] == 1
+        assert data["applications"][0]["status"] == "discovered"
+        assert data["applications"][0]["job_title"] == "Imported Role"
+
+    def test_patch_discovered_status_allowed(self, app_client):
+        """discovered is a valid PATCH status (imported queue)."""
+        client, db, _tmp = app_client
+        app_id = insert_app(db, status="discovered")
+        resp = client.patch(
+            f"/api/applications/{app_id}",
+            data=json.dumps({"status": "discovered", "notes": "queued"}),
+            content_type="application/json",
+        )
+        assert resp.status_code == 200
+        updated = db.get_application(app_id)
+        assert updated.status == "discovered"
+        assert updated.notes == "queued"
+
+    def test_apply_endpoint_requires_url(self, app_client):
+        """POST /apply rejects jobs without apply_url."""
+        client, db, _tmp = app_client
+        app_id = insert_app(db, status="discovered", apply_url="")
+        resp = client.post(f"/api/applications/{app_id}/apply")
+        assert resp.status_code == 400
+
+    def test_apply_endpoint_not_found(self, app_client):
+        client, _db, _tmp = app_client
+        resp = client.post("/api/applications/99999/apply")
+        assert resp.status_code == 404
 
     def test_update_application_status(self, app_client):
         """AC-007-2: PATCH updates status."""
@@ -516,7 +571,7 @@ class TestConfig:
     """FR-009: Configuration get / put / merge."""
 
     def test_get_config_empty(self, app_client):
-        """AC-009-2: No config file yet returns empty dict."""
+        """AC-009-2: No config file yet returns client_mode defaults."""
         client, _db, _tmp = app_client
         # Remove the config file created by the fixture
         config_path = _tmp / "config.json"
@@ -524,7 +579,9 @@ class TestConfig:
             config_path.unlink()
         resp = client.get("/api/config")
         assert resp.status_code == 200
-        assert resp.get_json() == {}
+        data = resp.get_json()
+        assert "ui" in data
+        assert "client_mode" in data["ui"]
 
     def test_put_config_full(self, app_client):
         """AC-009-3: PUT a full config succeeds."""
@@ -687,6 +744,7 @@ class TestSetup:
         assert resp.status_code == 200
         data = resp.get_json()
         assert data["is_first_run"] is True
+        assert "client_mode" in data
         assert "ai_available" in data
 
     def test_setup_status_after_config(self, app_client):

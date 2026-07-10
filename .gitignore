@@ -37,8 +37,14 @@ guilherme-setup.zip
 .env
 *.pem
 *.key
+*.ppk
+id_rsa
+id_ed25519
 presets/guilherme-menegatti/secrets.env
 presets/.active_preset
+SYNC-TOKEN*.txt
+scripts/cloudflared-jobs-config.yml
+**/.cloudflared/*.json
 
 # Test / Coverage
 .coverage

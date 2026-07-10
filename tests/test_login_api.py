@@ -102,6 +102,22 @@ class TestLoginOpen:
         assert rv.get_json()["status"] == "opening"
         mock_webkit.assert_called_once()
 
+    @patch("routes.login.preferred_engine", return_value="webkit")
+    @patch("routes.login._open_playwright_login", return_value="opening")
+    @patch("routes.login.find_system_chrome", return_value="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+    def test_macos_uses_playwright_even_with_chrome(
+        self, _chrome, mock_pw, _engine, app_client
+    ):
+        """On macOS preferred_engine is webkit — login must use Playwright, not Chrome."""
+        client, _ = app_client
+        rv = client.post(
+            "/api/login/open",
+            json={"url": "https://www.linkedin.com/login"},
+        )
+        assert rv.status_code == 200
+        assert rv.get_json()["status"] == "opening"
+        mock_pw.assert_called_once_with("https://www.linkedin.com/login", "webkit")
+
     @patch("routes.login._profile_chrome_running", return_value=False)
     @patch("routes.login.subprocess.Popen")
     @patch("routes.login.find_system_chrome", return_value="C:/chrome.exe")

@@ -16,13 +16,18 @@ import { initHelp, maybeStartTourOnFirstVisit } from './help.js';
 import { showNavLoading, hideNavLoading } from './loading.js';
 import { onReady } from './i18n.js';
 
+/** Screens hidden in Mac/apply client mode (split architecture). */
+const CLIENT_HIDDEN_SCREENS = new Set(['workflow', 'dashboard', 'analytics', 'resumes']);
+
 export function initNavTabs() {
+  applyClientModeNav();
   const tabs = document.querySelectorAll('#navbar .nav-tabs a[role="tab"]');
   tabs.forEach(a => {
     a.addEventListener('click', () => switchScreen(a.dataset.screen));
     a.addEventListener('keydown', e => {
-      const tabArr = [...tabs];
+      const tabArr = visibleNavTabs();
       const idx = tabArr.indexOf(a);
+      if (idx < 0) return;
       let newIdx = -1;
       if (e.key === 'ArrowRight') newIdx = (idx + 1) % tabArr.length;
       else if (e.key === 'ArrowLeft') newIdx = (idx - 1 + tabArr.length) % tabArr.length;
@@ -37,7 +42,23 @@ export function initNavTabs() {
   });
 }
 
+function visibleNavTabs() {
+  return [...document.querySelectorAll('#navbar .nav-tabs a[role="tab"]')]
+    .filter(a => a.closest('li') && !a.closest('li').classList.contains('hidden'));
+}
+
+export function applyClientModeNav() {
+  const clientMode = !!state.clientMode;
+  document.body.classList.toggle('client-mode', clientMode);
+  document.querySelectorAll('#navbar .nav-tabs li[data-client-hide]').forEach(li => {
+    li.classList.toggle('hidden', clientMode);
+  });
+}
+
 export async function switchScreen(name) {
+  if (state.clientMode && CLIENT_HIDDEN_SCREENS.has(name)) {
+    name = 'applications';
+  }
   state.currentScreen = name;
   document.querySelectorAll('#navbar .nav-tabs a[role="tab"]').forEach(a => {
     const isActive = a.dataset.screen === name;
@@ -77,12 +98,26 @@ export function showApp() {
   document.getElementById('wizard-overlay').classList.add('hidden');
   document.getElementById('navbar').classList.remove('hidden');
   document.getElementById('app-screens').classList.remove('hidden');
-  switchScreen('workflow');
-  loadWorkflow();
+  applyClientModeNav();
+  const home = state.clientMode ? 'applications' : 'workflow';
+  switchScreen(home);
+  if (!state.clientMode) loadWorkflow();
   onReady(() => {
     initHelp();
-    maybeStartTourOnFirstVisit();
+    if (!state.clientMode) maybeStartTourOnFirstVisit();
     setTimeout(() => maybeAutoCheckUpdates(), 2500);
     maybeShowShortcutsPrompt();
   });
+}
+
+export async function detectClientMode() {
+  try {
+    const res = await fetch('/api/setup/status');
+    const data = await res.json();
+    state.clientMode = !!data.client_mode;
+  } catch {
+    state.clientMode = false;
+  }
+  applyClientModeNav();
+  return state.clientMode;
 }

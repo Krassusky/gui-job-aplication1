@@ -139,8 +139,9 @@ Inclui:
 
 Peça ao Krassusky:
 
-- **URL:** `http://192.168.15.3:8765` (mesma Wi‑Fi) ou IP Tailscale  
-- **Token:** arquivo `SYNC-TOKEN-FOR-GUILHERME.txt`
+- **URL:** `https://jobs.krassusky.com`  
+  (Cloudflare Tunnel — funciona de qualquer rede, sem mesma Wi‑Fi)
+- **Token:** arquivo `SYNC-TOKEN-FOR-GUILHERME.txt` no PC Windows
 
 No app:
 
@@ -148,7 +149,14 @@ No app:
 2. Cole URL e token
 3. **Test connection**
 4. **Import pending jobs**
-5. Veja as vagas em **Applications**
+5. Abra **Candidaturas** (aba principal neste Mac) — as vagas importadas aparecem com status **Discovered**
+6. Clique numa vaga → veja JD / URL → **Generate Resume & Cover Letter** → **Apply to This Job**
+7. Quando a carta aparecer, revise e clique **Approve & Apply**
+
+Abas neste Mac (modo cliente): **Candidaturas**, **Arquivos de experiência**, **Dados para candidaturas**, **Configurações**.  
+(Guia, Painel, Análises e Biblioteca de currículos ficam ocultos — a busca de vagas roda no PC Windows.)
+
+Seus dados em `~/.autoapply/autoapply.db` **não são apagados** ao atualizar o app.
 
 ---
 
@@ -180,10 +188,10 @@ test -f ~/.autoapply/default_resume.docx && echo "Resume OK"
 test -f ~/.autoapply/.preset-guilherme-menegatti-v1 && echo "Preset Guilherme OK"
 ```
 
-Testar API do PC de casa (mesma rede):
+Testar API (qualquer rede, via Cloudflare):
 
 ```bash
-curl -s http://192.168.15.3:8765/api/sync/health
+curl -s https://jobs.krassusky.com/api/sync/health
 ```
 
 Resposta esperada: `{"status":"ok"}`
@@ -196,7 +204,7 @@ Resposta esperada: `{"status":"ok"}`
 |----------|---------|
 | App não abre no duplo clique | Use `open /Applications/JobApplyAssistant.app` ou o binário direto (secção 6) |
 | “App danificado” / quarentena | Rode `xattr -dr com.apple.quarantine` de novo |
-| Import falha | Mesma Wi‑Fi que o PC de casa, ou Tailscale; confirme URL e token |
+| Import falha | URL `https://jobs.krassusky.com` + token; confirme que o tunnel Cloudflare e o Job Hunter estão ativos |
 | Groq / IA não responde | Settings → AI Provider → validar Groq |
 | LinkedIn não conecta | E-mail/senha, não Google; tente de novo no login do app |
 
@@ -205,4 +213,5 @@ Resposta esperada: `{"status":"ok"}`
 ## 12. Suporte
 
 - Releases: https://github.com/Krassusky/gui-job-aplication1/releases  
-- Dashboard do caçador (PC de casa): http://192.168.15.3:8765/dashboard  
+- Sync API (Guilherme): https://jobs.krassusky.com  
+- Dashboard do caçador (só no PC de casa / LAN): http://127.0.0.1:8765/dashboard  

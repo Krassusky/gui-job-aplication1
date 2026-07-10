@@ -262,12 +262,16 @@ class TestApplicationWorkflow:
 
         # List all
         r = client.get("/api/applications")
-        apps = r.get_json()
+        payload = r.get_json()
+        apps = payload["applications"]
+        assert payload["total"] == 2
         assert len(apps) == 2
 
         # Filter by platform
         r = client.get("/api/applications?platform=linkedin")
-        apps = r.get_json()
+        payload = r.get_json()
+        apps = payload["applications"]
+        assert payload["total"] == 1
         assert len(apps) == 1
         assert apps[0]["company"] == "Stripe"
 
@@ -283,7 +287,9 @@ class TestApplicationWorkflow:
 
         # Verify update via list
         r = client.get("/api/applications?status=interview")
-        apps = r.get_json()
+        payload = r.get_json()
+        apps = payload["applications"]
+        assert payload["total"] == 1
         assert len(apps) == 1
         assert apps[0]["notes"] == "Phone screen scheduled"
 

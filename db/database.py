@@ -364,17 +364,14 @@ class Database:
                 (status, notes, application_id),
             )
 
-    def get_all_applications(
+    def _applications_filter_clause(
         self,
         status: str | None = None,
         platform: str | None = None,
         search: str | None = None,
-        limit: int = 50,
-        offset: int = 0,
-    ) -> list[Application]:
-        query = "SELECT * FROM applications WHERE 1=1"
+    ) -> tuple[str, list]:
+        query = " FROM applications WHERE 1=1"
         params: list = []
-
         if status:
             query += " AND status = ?"
             params.append(status)
@@ -384,13 +381,73 @@ class Database:
         if search:
             query += " AND (job_title LIKE ? OR company LIKE ?)"
             params.extend([f"%{search}%", f"%{search}%"])
+        return query, params
 
-        query += " ORDER BY applied_at DESC LIMIT ? OFFSET ?"
-        params.extend([limit, offset])
+    def count_applications(
+        self,
+        status: str | None = None,
+        platform: str | None = None,
+        search: str | None = None,
+    ) -> int:
+        clause, params = self._applications_filter_clause(status, platform, search)
+        with self._connect() as conn:
+            row = conn.execute(f"SELECT COUNT(*) AS n{clause}", params).fetchone()
+            return int(row["n"] if row else 0)
+
+    def get_all_applications(
+        self,
+        status: str | None = None,
+        platform: str | None = None,
+        search: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+    ) -> list[Application]:
+        clause, params = self._applications_filter_clause(status, platform, search)
+        query = f"SELECT *{clause} ORDER BY applied_at DESC LIMIT ? OFFSET ?"
+        params = [*params, limit, offset]
 
         with self._connect() as conn:
             rows = conn.execute(query, params).fetchall()
             return [Application(**dict(row)) for row in rows]
+
+    def update_application_result(
+        self,
+        application_id: int,
+        *,
+        status: str,
+        resume_path: str | None = None,
+        cover_letter_path: str | None = None,
+        cover_letter_text: str | None = None,
+        error_message: str | None = None,
+        description_path: str | None = None,
+        notes: str | None = None,
+    ) -> None:
+        """Update an existing application after generate/apply (no new row)."""
+        with self._connect() as conn:
+            conn.execute(
+                """
+                UPDATE applications
+                SET status = ?,
+                    resume_path = COALESCE(?, resume_path),
+                    cover_letter_path = COALESCE(?, cover_letter_path),
+                    cover_letter_text = COALESCE(?, cover_letter_text),
+                    error_message = ?,
+                    description_path = COALESCE(?, description_path),
+                    notes = COALESCE(?, notes),
+                    updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+                """,
+                (
+                    status,
+                    resume_path,
+                    cover_letter_path,
+                    cover_letter_text,
+                    error_message,
+                    description_path,
+                    notes,
+                    application_id,
+                ),
+            )
 
     def get_application(self, application_id: int) -> Application | None:
         with self._connect() as conn:

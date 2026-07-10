@@ -287,6 +287,7 @@ class TestAppState:
         assert "rejected" in app_state.VALID_APP_STATUSES
         assert "accepted" in app_state.VALID_APP_STATUSES
         assert "interview" in app_state.VALID_APP_STATUSES
+        assert "discovered" in app_state.VALID_APP_STATUSES
         assert "invalid_status" not in app_state.VALID_APP_STATUSES
 
     def test_bot_state_is_bot_state_instance(self):

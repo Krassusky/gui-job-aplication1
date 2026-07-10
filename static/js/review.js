@@ -2,8 +2,10 @@
    REVIEW CARD
    ═══════════════════════════════════════════════════════════════ */
 import { t } from './i18n.js';
+import { closeModal } from './modals.js';
 
 export function showReviewCard(evt) {
+  try { closeModal('modal-app-detail'); } catch { /* optional */ }
   const card = document.getElementById('review-card');
   document.getElementById('review-job-title').textContent =
     (evt.job_title || t('review.unknown')) + ' ' + t('review.at') + ' ' + (evt.company || t('review.unknown'));

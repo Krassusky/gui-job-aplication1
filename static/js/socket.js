@@ -65,5 +65,8 @@ function handleFeedEvent(evt) {
   if (['APPLIED', 'SKIPPED', 'ERROR'].includes(evt.type)) {
     hideReviewCard();
     hideLoginGateModal();
+    if (state.currentScreen === 'applications') {
+      import('./applications.js').then(m => m.loadApplications()).catch(() => {});
+    }
   }
 }

@@ -213,8 +213,6 @@ def graceful_shutdown() -> None:
     with app_state.login_lock:
         proc = app_state.login_proc
         app_state.login_proc = None
-        context = app_state.login_context
-        playwright = app_state.login_playwright
         app_state.login_context = None
         app_state.login_playwright = None
     if proc is not None:
@@ -223,16 +221,12 @@ def graceful_shutdown() -> None:
             proc.wait(timeout=5)
         except Exception as e:
             logger.debug("Error terminating login browser: %s", e)
-    if context is not None:
-        try:
-            context.close()
-        except Exception as e:
-            logger.debug("Error closing Playwright login context: %s", e)
-    if playwright is not None:
-        try:
-            playwright.stop()
-        except Exception as e:
-            logger.debug("Error stopping Playwright login instance: %s", e)
+    try:
+        from core.playwright_sync import login_playwright_worker
+
+        login_playwright_worker.close()
+    except Exception as e:
+        logger.debug("Error closing Playwright login browser: %s", e)
 
     # 5. Close database
     db = app_state.db

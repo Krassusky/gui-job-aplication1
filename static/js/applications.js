@@ -6,7 +6,19 @@ import { escHtml, escAttr, matchColor, badgeClass } from './helpers.js';
 import { closeModal, openModal } from './modals.js';
 import { t } from './i18n.js';
 
+const APP_STATUSES = [
+  'discovered', 'applied', 'interview', 'rejected', 'offer',
+  'withdrawn', 'error', 'manual_required', 'skipped',
+];
+
 let searchTimeout = null;
+
+function statusOptionsHtml(selected) {
+  const values = APP_STATUSES.includes(selected) ? APP_STATUSES : [selected, ...APP_STATUSES];
+  return values.filter(Boolean).map(s =>
+    `<option value="${escAttr(s)}" ${s === selected ? 'selected' : ''}>${t('status.' + s) || s}</option>`
+  ).join('');
+}
 
 export function debounceSearch() {
   clearTimeout(searchTimeout);
@@ -46,9 +58,7 @@ export async function loadApplications() {
         <td><span class="match-pct" style="color:${matchColor(a.match_score)}">${a.match_score != null ? a.match_score + '%' : '--'}</span></td>
         <td class="no-row-click">
           <select data-status-id="${a.id}" aria-label="Status for ${escAttr(a.job_title || '')}">
-            ${['applied','interview','rejected','offer','withdrawn','error','manual_required'].map(s =>
-              `<option value="${s}" ${a.status === s ? 'selected' : ''}>${t('status.' + s)}</option>`
-            ).join('')}
+            ${statusOptionsHtml(a.status)}
           </select>
         </td>
         <td class="text-dim" style="white-space:nowrap;">${(a.applied_at || a.applied_date) ? new Date(a.applied_at || a.applied_date).toLocaleDateString() : '--'}</td>
@@ -114,8 +124,9 @@ export async function viewApplicationDetail(id) {
     const events = await eventsRes.json();
     if (app.error) { content.innerHTML = `<div class="text-dim">${escHtml(app.error)}</div>`; return; }
 
-    const statusOptions = ['applied','interview','rejected','offer','withdrawn','error','manual_required'];
     const fmtDate = d => d ? new Date(d).toLocaleString() : '--';
+    const canApply = !!app.apply_url && ['discovered', 'error', 'manual_required', 'skipped'].includes(app.status);
+    const hasJd = !!(app.description_path || (app.description_text && String(app.description_text).trim()));
 
     let timeline = '';
     if (Array.isArray(events) && events.length) {
@@ -142,7 +153,7 @@ export async function viewApplicationDetail(id) {
         <div><div class="detail-label">${t('applications.label_salary')}</div><div class="detail-value">${escHtml(app.salary || t('applications.not_specified'))}</div></div>
         <div><div class="detail-label">${t('applications.label_status')}</div><div class="detail-value">
           <select id="detail-status-select" data-detail-status-id="${app.id}" style="font-size:.9rem;" aria-label="${t('applications.label_status')}">
-            ${statusOptions.map(s => `<option value="${s}" ${app.status === s ? 'selected' : ''}>${t('status.' + s)}</option>`).join('')}
+            ${statusOptionsHtml(app.status)}
           </select>
         </div></div>
       </div>
@@ -156,11 +167,14 @@ export async function viewApplicationDetail(id) {
         <h4>${t('applications.label_timeline')}</h4>
         ${timeline}
       </div>
+      <div id="app-detail-action-status" class="text-dim" style="font-size:.88rem;margin-bottom:8px;"></div>
       <div class="app-detail-actions">
         ${app.apply_url ? `<a href="${escAttr(app.apply_url)}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">${t('applications.view_job_posting')}</a>` : ''}
-        ${app.description_path ? `<a href="/api/applications/${app.id}/description" target="_blank" class="btn btn-ghost btn-sm">${t('applications.view_description')}</a>` : ''}
+        ${hasJd ? `<a href="/api/applications/${app.id}/description" target="_blank" class="btn btn-ghost btn-sm">${t('applications.view_description')}</a>` : ''}
         ${app.resume_path ? `<a href="/api/applications/${app.id}/resume" target="_blank" class="btn btn-ghost btn-sm">${t('applications.download_resume')}</a>` : ''}
         ${app.cover_letter_text ? `<button class="btn btn-ghost btn-sm" data-detail-cover-id="${app.id}">${t('applications.view_cover_letter')}</button>` : ''}
+        <button class="btn btn-primary btn-sm" data-generate-id="${app.id}">${t('applications.generate_materials')}</button>
+        ${canApply ? `<button class="btn btn-success btn-sm" data-apply-id="${app.id}">${t('applications.apply_this_job')}</button>` : ''}
       </div>
     `;
   } catch (e) {
@@ -176,6 +190,43 @@ export async function updateDetailStatus(id) {
 export async function saveDetailNotes(id) {
   const notes = document.getElementById('detail-notes-input').value;
   try { await fetch(`/api/applications/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ notes }) }); } catch { }
+}
+
+export async function generateApplicationMaterials(id) {
+  const statusEl = document.getElementById('app-detail-action-status');
+  if (statusEl) statusEl.textContent = t('applications.generating');
+  try {
+    const res = await fetch(`/api/applications/${id}/generate`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) {
+      if (statusEl) statusEl.textContent = data.error || t('applications.generate_error');
+      return;
+    }
+    if (statusEl) statusEl.textContent = t('applications.generate_done');
+    await viewApplicationDetail(id);
+    if (data.cover_letter_text) {
+      document.getElementById('modal-cover-letter-content').textContent = data.cover_letter_text;
+    }
+  } catch {
+    if (statusEl) statusEl.textContent = t('applications.generate_error');
+  }
+}
+
+export async function applyToApplication(id) {
+  const statusEl = document.getElementById('app-detail-action-status');
+  if (statusEl) statusEl.textContent = t('applications.apply_starting');
+  try {
+    const res = await fetch(`/api/applications/${id}/apply`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) {
+      if (statusEl) statusEl.textContent = data.error || t('applications.apply_error');
+      return;
+    }
+    if (statusEl) statusEl.textContent = t('applications.apply_started');
+    closeModal('modal-app-detail');
+  } catch {
+    if (statusEl) statusEl.textContent = t('applications.apply_error');
+  }
 }
 
 export function exportCSV() {

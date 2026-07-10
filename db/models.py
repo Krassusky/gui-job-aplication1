@@ -17,11 +17,13 @@ class Application(BaseModel):
     cover_letter_path: str | None
     cover_letter_text: str | None
     description_path: str | None
+    description_text: str | None = None
     status: str
     error_message: str | None
     applied_at: str
     updated_at: str
     notes: str | None
+    synced_at: str | None = None
 
 
 class ResumeVersion(BaseModel):

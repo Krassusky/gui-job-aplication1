@@ -96,6 +96,9 @@
     "font_size": 11,
     "margin": "0.75in"
   },
+  "ui": {
+    "client_mode": true
+  },
   "company_blacklist": [],
   "version": "2.0"
 }

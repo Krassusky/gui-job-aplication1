@@ -75,6 +75,52 @@ def _scheduler_start_bot() -> str:
         return "started"
 
 
+def start_apply_one(application_id: int) -> str:
+    """Start apply-one-job thread. Returns 'started', 'already_running', or 'no_config'."""
+    with app_state.bot_lock:
+        if app_state.bot_thread and app_state.bot_thread.is_alive():
+            return "already_running"
+        config = load_config()
+        if config is None:
+            return "no_config"
+        app_state.bot_state.start()
+
+        def _run():
+            from bot.bot import apply_single_application
+
+            sio = app_state.socketio
+            db = app_state.db
+            if sio is None or db is None:
+                logger.error("Cannot apply one: socketio or db not initialized")
+                return
+
+            def _emit(event_name, data):
+                sio.emit(event_name, data)
+                status_dict = app_state.bot_state.get_status_dict()
+                status_dict["ai_available"] = check_ai_available()
+                sio.emit("bot_status", status_dict)
+
+            try:
+                apply_single_application(
+                    application_id,
+                    state=app_state.bot_state,
+                    config=config,
+                    db=db,
+                    emit_func=_emit,
+                )
+            finally:
+                app_state.bot_state.stop()
+                status_dict = app_state.bot_state.get_status_dict()
+                status_dict["ai_available"] = check_ai_available()
+                sio.emit("bot_status", status_dict)
+
+        app_state.bot_thread = threading.Thread(
+            target=_run, daemon=True, name=f"apply-one-{application_id}",
+        )
+        app_state.bot_thread.start()
+        return "started"
+
+
 def _scheduler_stop_bot() -> None:
     """Stop bot from scheduler."""
     with app_state.bot_lock:

@@ -255,7 +255,15 @@
     "col_resume": "Resume",
     "col_cover_letter": "Cover Letter",
     "col_notes": "Notes",
-    "notes_placeholder": "Add notes about this application..."
+    "notes_placeholder": "Add notes about this application...",
+    "generate_materials": "Generate Resume & Cover Letter",
+    "apply_this_job": "Apply to This Job",
+    "generating": "Generating resume and cover letter…",
+    "generate_done": "Materials ready — download resume or view cover letter above.",
+    "generate_error": "Could not generate materials.",
+    "apply_starting": "Starting apply…",
+    "apply_started": "Apply started — review the cover letter when prompted, then approve.",
+    "apply_error": "Could not start apply."
   },
   "profile": {
     "edit_file": "Edit File",
@@ -480,7 +488,11 @@
     "offer": "Offer",
     "withdrawn": "Withdrawn",
     "error": "Error",
-    "manual_required": "Manual Required"
+    "manual_required": "Manual Required",
+    "discovered": "Discovered",
+    "skipped": "Skipped",
+    "pending_sync": "Pending Sync",
+    "synced": "Synced"
   },
   "schedule": {
     "enabled": "Enabled",
@@ -523,6 +535,7 @@
     "invalid_status": "Invalid status. Must be one of: {valid_statuses}",
     "resume_not_found": "Resume not found",
     "description_not_found": "Job description not found",
+    "apply_url_required": "This job has no apply URL",
     "bot_already_running": "Bot is already running",
     "config_not_found": "Configuration not found. Complete setup first.",
     "request_failed": "Request failed. Please try again.",

@@ -405,12 +405,12 @@
 <nav id="navbar" class="hidden" aria-label="Main navigation">
   <div class="logo" aria-hidden="true">Job<span>Apply</span></div>
   <ul class="nav-tabs" role="tablist">
-    <li role="presentation"><a role="tab" class="active" data-screen="workflow" aria-selected="true" tabindex="0" data-i18n="nav.workflow">Guia</a></li>
-    <li role="presentation"><a role="tab" data-screen="dashboard" aria-selected="false" tabindex="-1" data-i18n="nav.dashboard">Dashboard</a></li>
+    <li role="presentation" data-client-hide="1"><a role="tab" class="active" data-screen="workflow" aria-selected="true" tabindex="0" data-i18n="nav.workflow">Guia</a></li>
+    <li role="presentation" data-client-hide="1"><a role="tab" data-screen="dashboard" aria-selected="false" tabindex="-1" data-i18n="nav.dashboard">Dashboard</a></li>
     <li role="presentation"><a role="tab" data-screen="applications" aria-selected="false" tabindex="-1" data-i18n="nav.applications">Applications</a></li>
     <li role="presentation"><a role="tab" data-screen="profile" aria-selected="false" tabindex="-1" data-i18n="nav.profile">Profile</a></li>
-    <li role="presentation"><a role="tab" data-screen="analytics" aria-selected="false" tabindex="-1" data-i18n="nav.analytics">Analytics</a></li>
-    <li role="presentation"><a role="tab" data-screen="resumes" aria-selected="false" tabindex="-1" data-i18n="nav.resumes">Resume Library</a></li>
+    <li role="presentation" data-client-hide="1"><a role="tab" data-screen="analytics" aria-selected="false" tabindex="-1" data-i18n="nav.analytics">Analytics</a></li>
+    <li role="presentation" data-client-hide="1"><a role="tab" data-screen="resumes" aria-selected="false" tabindex="-1" data-i18n="nav.resumes">Resume Library</a></li>
     <li role="presentation"><a role="tab" data-screen="knowledge-base" aria-selected="false" tabindex="-1" data-i18n="nav.knowledge_base" data-i18n-title="nav.knowledge_base_hint" title="Stored experience, screening answers &amp; documents">Application Data</a></li>
     <li role="presentation"><a role="tab" data-screen="settings" aria-selected="false" tabindex="-1" data-i18n="nav.settings">Settings</a></li>
   </ul>
@@ -441,6 +441,60 @@
      SCREENS
      ════════════════════════════════════════════════════════════════ -->
 <main class="main-content hidden" id="app-screens" role="main">
+
+  <!-- Global review / login overlays (must stay outside .screen so client mode can show them) -->
+  <div id="review-card" class="review-card hidden" role="region" aria-label="Review pending application" aria-live="assertive">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h3 id="review-job-title">Job Title at Company</h3>
+        <div class="review-meta">
+          <span id="review-platform">linkedin</span> &middot;
+          Match score: <strong id="review-score">85</strong>%
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="reviewSkip()" style="white-space:nowrap;" data-i18n="button.skip">Skip</button>
+    </div>
+    <div class="review-section">
+      <h4 data-i18n="review.cover_letter_heading">Cover Letter</h4>
+      <textarea id="review-cover-letter" aria-label="Cover letter text for review"></textarea>
+    </div>
+    <div class="review-actions">
+      <button class="btn btn-success" onclick="reviewApprove()" data-i18n="button.approve_and_apply">Approve &amp; Apply</button>
+      <button class="btn btn-primary" onclick="reviewEdit()" data-i18n="review.edit_and_apply">Edit &amp; Apply</button>
+      <button class="btn btn-warning" id="review-manual-submit" onclick="reviewManualSubmit()" data-i18n="button.manual_apply">Apply Manually</button>
+      <button class="btn btn-ghost" onclick="reviewSkip()" data-i18n="button.skip">Skip</button>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="modal-login-gate">
+    <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="login-gate-title" aria-describedby="login-gate-desc">
+      <button class="modal-close" onclick="closeModal('modal-login-gate')" aria-label="Close dialog">&times;</button>
+      <h3 id="login-gate-title" data-i18n="login_gate.title">Login Required</h3>
+      <p id="login-gate-desc" class="text-dim" style="margin-bottom:16px;" data-i18n="login_gate.description">
+        The bot detected a login wall. Please log in to this portal, then click "I've Logged In" to continue.
+      </p>
+      <div style="background:var(--bg); padding:12px; border-radius:var(--radius-sm); margin-bottom:16px;">
+        <div style="font-size:.85rem; margin-bottom:4px;"><strong data-i18n="login_gate.domain_label">Portal:</strong> <span id="login-gate-domain"></span></div>
+        <div style="font-size:.85rem;"><strong data-i18n="login_gate.type_label">Type:</strong> <span id="login-gate-type"></span></div>
+        <div style="font-size:.85rem; margin-top:4px;" class="hidden"><a id="login-gate-url" href="#" target="_blank" rel="noopener" data-i18n="login_gate.open_portal">Open portal</a></div>
+      </div>
+      <p class="text-dim" style="font-size:.85rem; margin-bottom:12px;" data-i18n="login_gate.save_hint">
+        Optionally save your credentials below for future auto-login:
+      </p>
+      <div class="form-group" style="margin-bottom:12px;">
+        <label for="login-gate-username" data-i18n="login_gate.username_label">Username / Email</label>
+        <input type="text" class="form-control" id="login-gate-username" autocomplete="username">
+      </div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label for="login-gate-password" data-i18n="login_gate.password_label">Password</label>
+        <input type="password" class="form-control" id="login-gate-password" autocomplete="current-password">
+      </div>
+      <div class="flex gap-sm">
+        <button class="btn btn-success" onclick="loginGateDone()" data-i18n="login_gate.done_button">I've Logged In</button>
+        <button class="btn btn-ghost" onclick="loginGateSkip()" data-i18n="login_gate.skip_button">Skip This Job</button>
+      </div>
+    </div>
+  </div>
 
   <!-- WORKFLOW GUIDE -->
   <div class="screen" id="screen-workflow">
@@ -620,61 +674,6 @@
       </div>
     </div>
 
-    <!-- Review Card — shown when bot is awaiting review decision -->
-    <div id="review-card" class="review-card hidden" role="region" aria-label="Review pending application" aria-live="assertive">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-        <div>
-          <h3 id="review-job-title">Job Title at Company</h3>
-          <div class="review-meta">
-            <span id="review-platform">linkedin</span> &middot;
-            Match score: <strong id="review-score">85</strong>%
-          </div>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="reviewSkip()" style="white-space:nowrap;" data-i18n="button.skip">Skip</button>
-      </div>
-      <div class="review-section">
-        <h4 data-i18n="review.cover_letter_heading">Cover Letter</h4>
-        <textarea id="review-cover-letter" aria-label="Cover letter text for review"></textarea>
-      </div>
-      <div class="review-actions">
-        <button class="btn btn-success" onclick="reviewApprove()" data-i18n="button.approve_and_apply">Approve &amp; Apply</button>
-        <button class="btn btn-primary" onclick="reviewEdit()" data-i18n="review.edit_and_apply">Edit &amp; Apply</button>
-        <button class="btn btn-warning" id="review-manual-submit" onclick="reviewManualSubmit()" data-i18n="button.manual_apply">Apply Manually</button>
-        <button class="btn btn-ghost" onclick="reviewSkip()" data-i18n="button.skip">Skip</button>
-      </div>
-    </div>
-
-    <!-- Login Gate Modal (FR-089) -->
-    <div class="modal-overlay hidden" id="modal-login-gate">
-      <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="login-gate-title" aria-describedby="login-gate-desc">
-        <button class="modal-close" onclick="closeModal('modal-login-gate')" aria-label="Close dialog">&times;</button>
-        <h3 id="login-gate-title" data-i18n="login_gate.title">Login Required</h3>
-        <p id="login-gate-desc" class="text-dim" style="margin-bottom:16px;" data-i18n="login_gate.description">
-          The bot detected a login wall. Please log in to this portal, then click "I've Logged In" to continue.
-        </p>
-        <div style="background:var(--bg); padding:12px; border-radius:var(--radius-sm); margin-bottom:16px;">
-          <div style="font-size:.85rem; margin-bottom:4px;"><strong data-i18n="login_gate.domain_label">Portal:</strong> <span id="login-gate-domain"></span></div>
-          <div style="font-size:.85rem;"><strong data-i18n="login_gate.type_label">Type:</strong> <span id="login-gate-type"></span></div>
-          <div style="font-size:.85rem; margin-top:4px;" class="hidden"><a id="login-gate-url" href="#" target="_blank" rel="noopener" data-i18n="login_gate.open_portal">Open portal</a></div>
-        </div>
-        <p class="text-dim" style="font-size:.85rem; margin-bottom:12px;" data-i18n="login_gate.save_hint">
-          Optionally save your credentials below for future auto-login:
-        </p>
-        <div class="form-group" style="margin-bottom:12px;">
-          <label for="login-gate-username" data-i18n="login_gate.username_label">Username / Email</label>
-          <input type="text" class="form-control" id="login-gate-username" autocomplete="username">
-        </div>
-        <div class="form-group" style="margin-bottom:20px;">
-          <label for="login-gate-password" data-i18n="login_gate.password_label">Password</label>
-          <input type="password" class="form-control" id="login-gate-password" autocomplete="current-password">
-        </div>
-        <div class="flex gap-sm">
-          <button class="btn btn-success" onclick="loginGateDone()" data-i18n="login_gate.done_button">I've Logged In</button>
-          <button class="btn btn-ghost" onclick="loginGateSkip()" data-i18n="login_gate.skip_button">Skip This Job</button>
-        </div>
-      </div>
-    </div>
-
     <div class="card">
       <div class="flex justify-between items-center" style="margin-bottom:12px;">
         <h3 class="flex items-center gap-sm" style="margin-bottom:0;" data-i18n="dashboard.activity_feed">
@@ -697,14 +696,16 @@
     <div class="card" style="margin-bottom:20px">
       <div class="filter-bar">
         <select class="form-control" id="filter-status" onchange="loadApplications()" aria-label="Filter by status">
-          <option value="">All Statuses</option>
-          <option value="applied">Applied</option>
-          <option value="interview">Interview</option>
-          <option value="rejected">Rejected</option>
-          <option value="offer">Offer</option>
-          <option value="withdrawn">Withdrawn</option>
-          <option value="error">Error</option>
-          <option value="manual_required">Manual Required</option>
+          <option value="" data-i18n="applications.filter_all_statuses">All Statuses</option>
+          <option value="discovered" data-i18n="status.discovered">Discovered</option>
+          <option value="applied" data-i18n="status.applied">Applied</option>
+          <option value="interview" data-i18n="status.interview">Interview</option>
+          <option value="rejected" data-i18n="status.rejected">Rejected</option>
+          <option value="offer" data-i18n="status.offer">Offer</option>
+          <option value="withdrawn" data-i18n="status.withdrawn">Withdrawn</option>
+          <option value="error" data-i18n="status.error">Error</option>
+          <option value="manual_required" data-i18n="status.manual_required">Manual Required</option>
+          <option value="skipped" data-i18n="status.skipped">Skipped</option>
         </select>
         <select class="form-control" id="filter-platform" onchange="loadApplications()" aria-label="Filter by platform">
           <option value="">All Platforms</option>

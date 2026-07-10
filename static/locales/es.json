@@ -255,7 +255,15 @@
     "col_resume": "CV",
     "col_cover_letter": "Carta",
     "col_notes": "Notas",
-    "notes_placeholder": "Agrega notas sobre esta solicitud..."
+    "notes_placeholder": "Agrega notas sobre esta solicitud...",
+    "generate_materials": "Generar CV y carta",
+    "apply_this_job": "Postular a este empleo",
+    "generating": "Generando CV y carta…",
+    "generate_done": "Materiales listos — descarga el CV o ve la carta arriba.",
+    "generate_error": "No se pudieron generar los materiales.",
+    "apply_starting": "Iniciando postulación…",
+    "apply_started": "Postulación iniciada — revisa la carta cuando aparezca y aprueba.",
+    "apply_error": "No se pudo iniciar la postulación."
   },
   "profile": {
     "edit_file": "Editar Archivo",
@@ -464,7 +472,11 @@
     "offer": "Oferta",
     "withdrawn": "Retirada",
     "error": "Error",
-    "manual_required": "Requiere Acción Manual"
+    "manual_required": "Requiere Acción Manual",
+    "discovered": "Descubierta",
+    "skipped": "Omitida",
+    "pending_sync": "Pendiente de sync",
+    "synced": "Sincronizada"
   },
   "schedule": {
     "enabled": "Habilitado",
@@ -507,6 +519,7 @@
     "invalid_status": "Estado inválido. Debe ser uno de: {valid_statuses}",
     "resume_not_found": "CV no encontrado",
     "description_not_found": "Descripción del puesto no encontrada",
+    "apply_url_required": "Este empleo no tiene URL de postulación",
     "bot_already_running": "El bot ya está en ejecución",
     "config_not_found": "Configuración no encontrada. Complete la configuración primero.",
     "request_failed": "La solicitud falló. Inténtalo de nuevo.",

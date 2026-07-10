@@ -95,6 +95,13 @@ def scrape_linkedin_profile(profile_path: Path | None = None) -> dict[str, Any]:
     Raises:
         RuntimeError: If not logged in or scraping fails.
     """
+    from core.playwright_sync import run_in_playwright_thread
+
+    return run_in_playwright_thread(_scrape_linkedin_profile_sync, profile_path)
+
+
+def _scrape_linkedin_profile_sync(profile_path: Path | None = None) -> dict[str, Any]:
+    """Playwright sync implementation — must run outside an asyncio loop."""
     import time
 
     root = profile_path or profile_dir()

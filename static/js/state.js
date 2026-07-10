@@ -16,5 +16,6 @@ export const state = {
   searchTimeout: null,
   editingFile: null,        // filename when editing, null when creating
   aiAvailable: false,
+  clientMode: false,        // Mac apply client — slim nav
   profileFiles: [],         // cached files from /api/profile/experiences
 };

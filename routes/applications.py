@@ -44,19 +44,47 @@ def _get_db():
 
 @applications_bp.route("/api/applications", methods=["GET"])
 def get_applications():
+    """List applications with pagination.
+
+    Prefers ``page`` / ``per_page`` (frontend contract). Also accepts legacy
+    ``limit`` / ``offset``. Always returns ``{applications, total, page, per_page}``.
+    """
     status = request.args.get("status")
     platform_filter = request.args.get("platform")
     search = request.args.get("search")
-    limit = request.args.get("limit", 50, type=int)
-    offset = request.args.get("offset", 0, type=int)
-    applications = _get_db().get_all_applications(
+
+    page = request.args.get("page", type=int)
+    per_page = request.args.get("per_page", type=int)
+    if page is not None or per_page is not None:
+        page = max(1, page or 1)
+        per_page = min(100, max(1, per_page or 15))
+        limit = per_page
+        offset = (page - 1) * per_page
+    else:
+        limit = min(100, max(1, request.args.get("limit", 50, type=int)))
+        offset = max(0, request.args.get("offset", 0, type=int))
+        page = (offset // limit) + 1 if limit else 1
+        per_page = limit
+
+    db = _get_db()
+    applications = db.get_all_applications(
         status=status,
         platform=platform_filter,
         search=search,
         limit=limit,
         offset=offset,
     )
-    return jsonify([a.model_dump() for a in applications])
+    total = db.count_applications(
+        status=status,
+        platform=platform_filter,
+        search=search,
+    )
+    return jsonify({
+        "applications": [a.model_dump() for a in applications],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+    })
 
 
 @applications_bp.route("/api/applications/<int:app_id>", methods=["GET"])
@@ -140,6 +168,63 @@ def get_job_description(app_id: int):
     if not application:
         return jsonify({"error": t("errors.application_not_found")}), 404
     desc_path = application.description_path
-    if not desc_path or not _is_safe_path(desc_path):
+    if desc_path and _is_safe_path(desc_path):
+        return send_file(desc_path, mimetype="text/html")
+    # Imported sync jobs often store JD as description_text only
+    text = (application.description_text or "").strip()
+    if not text:
         return jsonify({"error": t("errors.description_not_found")}), 404
-    return send_file(desc_path, mimetype="text/html")
+    html = (
+        "<!DOCTYPE html><html><head><meta charset='utf-8'>"
+        f"<title>{application.job_title}</title></head><body>"
+        f"<h1>{application.job_title}</h1>"
+        f"<p><strong>{application.company}</strong></p>"
+        f"<pre style='white-space:pre-wrap;font-family:system-ui,sans-serif'>"
+        f"{text}</pre></body></html>"
+    )
+    buf = io.BytesIO(html.encode("utf-8"))
+    return send_file(buf, mimetype="text/html")
+
+
+@applications_bp.route("/api/applications/<int:app_id>/generate", methods=["POST"])
+def generate_application_materials(app_id: int):
+    """Generate adaptive resume + cover letter for an existing application."""
+    from bot.bot import generate_for_application
+
+    db = _get_db()
+    application = db.get_application(app_id)
+    if not application:
+        return jsonify({"error": t("errors.application_not_found")}), 404
+
+    from config.settings import load_config
+    config = load_config()
+    if config is None:
+        return jsonify({"error": t("errors.config_not_found")}), 400
+
+    try:
+        result = generate_for_application(app_id, config, db)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    return jsonify(result)
+
+
+@applications_bp.route("/api/applications/<int:app_id>/apply", methods=["POST"])
+def apply_to_application(app_id: int):
+    """Start apply pipeline for one imported/discovered application (reuses bot appliers + review)."""
+    from routes.bot import start_apply_one
+
+    db = _get_db()
+    application = db.get_application(app_id)
+    if not application:
+        return jsonify({"error": t("errors.application_not_found")}), 404
+    if not (application.apply_url or "").strip():
+        return jsonify({"error": t("errors.apply_url_required")}), 400
+
+    result = start_apply_one(app_id)
+    if result == "already_running":
+        return jsonify({"error": t("errors.bot_already_running")}), 409
+    if result == "no_config":
+        return jsonify({"error": t("errors.config_not_found")}), 400
+    return jsonify({"status": "started", "application_id": app_id})

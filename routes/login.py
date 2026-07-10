@@ -23,12 +23,12 @@ from config.settings import get_data_dir  # Backward compatibility for tests.
 from core.browser_engine import (
     engine_display_name,
     find_system_chrome,
-    launch_persistent_context,
     preferred_engine,
     profile_dir as engine_profile_dir,
     read_platform_sessions,
 )
 from core.i18n import t
+from core.playwright_sync import login_playwright_worker, run_in_playwright_thread
 
 logger = logging.getLogger(__name__)
 
@@ -98,15 +98,11 @@ def _profile_chrome_running(profile: Path) -> bool:
 
 def _playwright_login_alive() -> bool:
     """Return True if a Playwright-managed login browser is still open."""
-    context = app_state.login_context
-    if context is None:
-        return False
-    try:
-        return bool(context.pages)
-    except Exception:
+    alive = login_playwright_worker.alive()
+    if not alive:
         app_state.login_context = None
         app_state.login_playwright = None
-        return False
+    return alive
 
 
 def _login_browser_alive() -> bool:
@@ -132,19 +128,9 @@ def _login_browser_alive() -> bool:
 
 def _close_playwright_login() -> None:
     """Close a Playwright-managed login browser."""
-    if app_state.login_context is not None:
-        try:
-            app_state.login_context.close()
-        except Exception as e:
-            logger.debug("Failed to close Playwright login context: %s", e)
-        app_state.login_context = None
-
-    if app_state.login_playwright is not None:
-        try:
-            app_state.login_playwright.stop()
-        except Exception as e:
-            logger.debug("Failed to stop Playwright login instance: %s", e)
-        app_state.login_playwright = None
+    login_playwright_worker.close()
+    app_state.login_context = None
+    app_state.login_playwright = None
 
 
 def _prepare_fresh_login_browser(profile: Path) -> None:
@@ -224,7 +210,7 @@ def _sessions_via_cdp(profile: Path) -> dict[str, bool] | None:
         logger.debug("Playwright unavailable for CDP session check")
         return None
 
-    try:
+    def _read() -> dict[str, bool]:
         with sync_playwright() as playwright:
             browser = playwright.chromium.connect_over_cdp(f"http://127.0.0.1:{port}")
             contexts = browser.contexts
@@ -242,6 +228,9 @@ def _sessions_via_cdp(profile: Path) -> dict[str, bool] | None:
                 for cookie in cookies
             )
             return {"linkedin": linkedin, "indeed": indeed}
+
+    try:
+        return run_in_playwright_thread(_read)
     except Exception as e:
         logger.debug("CDP session check failed: %s", e)
         return None
@@ -284,9 +273,14 @@ def _close_profile_browser(profile: Path) -> None:
         try:
             from playwright.sync_api import sync_playwright
 
-            with sync_playwright() as playwright:
-                browser = playwright.chromium.connect_over_cdp(f"http://127.0.0.1:{port}")
-                browser.close()
+            def _cdp_close() -> None:
+                with sync_playwright() as playwright:
+                    browser = playwright.chromium.connect_over_cdp(
+                        f"http://127.0.0.1:{port}"
+                    )
+                    browser.close()
+
+            run_in_playwright_thread(_cdp_close)
             return
         except Exception as e:
             logger.debug("CDP browser close failed: %s", e)
@@ -329,31 +323,15 @@ def _open_chrome_login(url: str, profile: Path) -> str:
 
 def _open_playwright_login(url: str, engine: str) -> str:
     """Open a Playwright browser for platform login. Returns status string."""
-    from playwright.sync_api import sync_playwright
+    if not login_playwright_worker.alive():
+        _prepare_fresh_login_browser(engine_profile_dir(engine))
 
-    if _playwright_login_alive():
-        pages = app_state.login_context.pages
-        page = pages[0] if pages else app_state.login_context.new_page()
-        page.goto(url, wait_until="domcontentloaded", timeout=60000)
-        logger.info("Login browser navigated in existing session: %s", url)
-        return "navigated"
-
-    _prepare_fresh_login_browser(engine_profile_dir(engine))
-
-    playwright = sync_playwright().start()
-    context = launch_persistent_context(playwright, engine=engine, headless=False)
-    page = context.pages[0] if context.pages else context.new_page()
-    page.goto(url, wait_until="domcontentloaded", timeout=60000)
-
-    app_state.login_playwright = playwright
-    app_state.login_context = context
+    status = login_playwright_worker.open(url, engine)
+    # Marker so status/shutdown paths know a Playwright login is active.
+    app_state.login_playwright = login_playwright_worker
+    app_state.login_context = login_playwright_worker
     app_state.login_engine = engine
-    logger.info(
-        "Login browser opened (%s): %s",
-        engine_display_name(engine),
-        url,
-    )
-    return "opening"
+    return status
 
 
 @login_bp.route("/api/login/browser-info", methods=["GET"])
@@ -430,8 +408,8 @@ def login_sessions():
     profile = engine_profile_dir(engine)
     result = {"linkedin": False, "indeed": False}
 
-    if app_state.login_context is not None:
-        result = read_platform_sessions(engine, open_context=app_state.login_context)
+    if login_playwright_worker.has_context():
+        result = login_playwright_worker.sessions()
     elif engine == "chromium":
         result = _sessions_from_cookies_file(profile)
         cdp_result = _sessions_via_cdp(profile)

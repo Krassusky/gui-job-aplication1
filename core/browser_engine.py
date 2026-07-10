@@ -184,7 +184,7 @@ def _read_cookies_headless(engine: BrowserEngine | None = None) -> list[dict[str
     except ImportError:
         return []
 
-    try:
+    def _read() -> list[dict[str, Any]]:
         with sync_playwright() as playwright:
             context = launch_persistent_context(
                 playwright,
@@ -194,6 +194,11 @@ def _read_cookies_headless(engine: BrowserEngine | None = None) -> list[dict[str
             cookies = context.cookies()
             context.close()
             return cookies
+
+    try:
+        from core.playwright_sync import run_in_playwright_thread
+
+        return run_in_playwright_thread(_read)
     except Exception as e:
         logger.debug("Headless cookie read failed: %s", e)
         return []

@@ -31,10 +31,15 @@ SUPPORTED_LLM_PROVIDERS = (
 
 @config_bp.route("/api/config", methods=["GET"])
 def get_config():
+    from config.settings import resolve_client_mode
+
     config = load_config()
     if config is None:
-        return jsonify({})
-    return jsonify(config.model_dump())
+        return jsonify({"ui": {"client_mode": resolve_client_mode(None)}})
+    data = config.model_dump()
+    data["ui"] = data.get("ui") or {}
+    data["ui"]["client_mode"] = resolve_client_mode(config)
+    return jsonify(data)
 
 
 @config_bp.route("/api/config", methods=["PUT"])
@@ -66,9 +71,12 @@ def update_config():
 
 @config_bp.route("/api/setup/status", methods=["GET"])
 def setup_status():
+    from config.settings import resolve_client_mode
+
     return jsonify({
         "is_first_run": is_first_run(),
         "ai_available": check_ai_available(),
+        "client_mode": resolve_client_mode(),
     })
 
 

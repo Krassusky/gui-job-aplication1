@@ -693,3 +693,348 @@ def _save_application(db, scored, resume_path, cl_path, cover_letter_text, resul
                 logger.warning("Failed to save resume version: %s", e)
     except Exception as e:
         logger.error("Failed to save application to DB: %s", e)
+
+
+def _application_to_scored(application, description_text: str = "") -> ScoredJob:
+    """Build a ScoredJob from a stored application row (no re-filter / dedup)."""
+    import uuid
+
+    from bot.search.base import RawJob
+
+    desc = (description_text or getattr(application, "description_text", None) or "").strip()
+    raw = RawJob(
+        title=application.job_title or "",
+        company=application.company or "",
+        location=application.location or "",
+        salary=application.salary,
+        description=desc,
+        apply_url=application.apply_url or "",
+        platform=application.platform or "linkedin",
+        external_id=application.external_id or str(application.id),
+        posted_at=None,
+    )
+    return ScoredJob(
+        id=str(uuid.uuid4()),
+        raw=raw,
+        score=int(application.match_score or 0),
+        pass_filter=True,
+        skip_reason=None,
+    )
+
+
+def _load_application_description(db, application) -> str:
+    """Prefer in-row description_text; fall back to description_path file."""
+    text = (getattr(application, "description_text", None) or "").strip()
+    if text:
+        return text
+    # Full row from sync helper includes description_text loaded from file
+    raw = db.get_sync_job(application.id)
+    if raw and raw.get("description_text"):
+        return str(raw["description_text"]).strip()
+    path = application.description_path
+    if path:
+        p = Path(path)
+        if p.exists():
+            try:
+                return p.read_text(encoding="utf-8")
+            except OSError:
+                pass
+    return ""
+
+
+def generate_for_application(application_id: int, config, db) -> dict:
+    """Generate resume/cover letter for an existing application and update the row."""
+    application = db.get_application(application_id)
+    if application is None:
+        raise ValueError("Application not found")
+
+    description = _load_application_description(db, application)
+    scored = _application_to_scored(application, description)
+    profile_dir = Path.home() / ".autoapply" / "profile"
+
+    desc_path = application.description_path
+    if not desc_path and description:
+        saved = _save_job_description(scored, profile_dir)
+        desc_path = str(saved) if saved else None
+
+    resume_path, cl_path, cover_letter_text, version_meta = _generate_docs(
+        scored, config, profile_dir, db=db
+    )
+
+    db.update_application_result(
+        application_id,
+        status=application.status,  # keep discovered until apply
+        resume_path=str(resume_path) if resume_path else None,
+        cover_letter_path=str(cl_path) if cl_path else None,
+        cover_letter_text=cover_letter_text or None,
+        error_message=application.error_message,
+        description_path=desc_path,
+    )
+
+    if version_meta:
+        try:
+            import json as _json
+            entry_ids = version_meta.get("source_entry_ids", [])
+            db.save_resume_version(
+                application_id=application_id,
+                job_title=scored.raw.title,
+                company=scored.raw.company,
+                resume_md_path=version_meta.get("resume_md_path", ""),
+                resume_pdf_path=version_meta.get("resume_pdf_path", ""),
+                match_score=scored.score,
+                llm_provider=version_meta.get("llm_provider"),
+                llm_model=version_meta.get("llm_model"),
+                reuse_source=version_meta.get("reuse_source"),
+                source_entry_ids=_json.dumps(entry_ids) if entry_ids else None,
+            )
+        except Exception as e:
+            logger.warning("Failed to save resume version for app %s: %s", application_id, e)
+
+    return {
+        "success": True,
+        "application_id": application_id,
+        "resume_path": str(resume_path) if resume_path else None,
+        "cover_letter_text": cover_letter_text or "",
+        "has_resume": bool(resume_path),
+    }
+
+
+def apply_single_application(
+    application_id: int,
+    state: "BotState",
+    config: "AppConfig",
+    db: "Database",
+    emit_func=None,
+) -> None:
+    """Apply to one stored application (imported queue). Reuses generate + review + appliers."""
+    profile_dir = Path.home() / ".autoapply" / "profile"
+    browser = None
+
+    def emit(event_type: str, **kwargs):
+        data = {"type": event_type, **kwargs}
+        if emit_func:
+            try:
+                emit_func("feed_event", data)
+            except Exception as e:
+                logger.debug("Failed to emit feed event: %s", e)
+        try:
+            db.save_feed_event(
+                event_type=event_type,
+                job_title=kwargs.get("job_title"),
+                company=kwargs.get("company"),
+                platform=kwargs.get("platform"),
+                message=kwargs.get("message"),
+            )
+        except Exception as e:
+            logger.warning("Failed to save feed event: %s", e)
+
+    try:
+        application = db.get_application(application_id)
+        if application is None:
+            emit("ERROR", message=f"Application {application_id} not found")
+            return
+
+        description = _load_application_description(db, application)
+        scored = _application_to_scored(application, description)
+        raw_job = scored.raw
+
+        emit(
+            "GENERATING",
+            job_title=raw_job.title,
+            company=raw_job.company,
+            platform=raw_job.platform,
+            message="Generating tailored resume and cover letter...",
+        )
+
+        desc_path = application.description_path
+        if not desc_path and description:
+            saved = _save_job_description(scored, profile_dir)
+            desc_path = str(saved) if saved else None
+
+        resume_path, cl_path, cover_letter_text, version_meta = _generate_docs(
+            scored, config, profile_dir, db=db
+        )
+
+        # Persist materials before review so user can preview
+        db.update_application_result(
+            application_id,
+            status=application.status,
+            resume_path=str(resume_path) if resume_path else None,
+            cover_letter_path=str(cl_path) if cl_path else None,
+            cover_letter_text=cover_letter_text or None,
+            error_message=None,
+            description_path=desc_path,
+        )
+
+        if config.bot.apply_mode in ("review", "watch"):
+            emit(
+                "REVIEW",
+                job_title=raw_job.title,
+                company=raw_job.company,
+                platform=raw_job.platform,
+                match_score=scored.score,
+                cover_letter=cover_letter_text,
+                apply_url=raw_job.apply_url,
+                message=f"Review: {raw_job.title} at {raw_job.company} (score {scored.score})",
+            )
+            decision, edited_cl = _wait_for_review(state)
+            if decision == "stop":
+                return
+            if decision == "skip":
+                db.update_application_result(
+                    application_id,
+                    status="skipped",
+                    resume_path=str(resume_path) if resume_path else None,
+                    cover_letter_path=str(cl_path) if cl_path else None,
+                    cover_letter_text=cover_letter_text or None,
+                    error_message=None,
+                    description_path=desc_path,
+                )
+                emit(
+                    "SKIPPED",
+                    job_title=raw_job.title,
+                    company=raw_job.company,
+                    platform=raw_job.platform,
+                    message=f"Skipped: {raw_job.title} at {raw_job.company}",
+                )
+                return
+            if decision == "edit" and edited_cl:
+                cover_letter_text = edited_cl
+            if decision == "manual":
+                db.update_application_result(
+                    application_id,
+                    status="manual_required",
+                    resume_path=str(resume_path) if resume_path else None,
+                    cover_letter_path=str(cl_path) if cl_path else None,
+                    cover_letter_text=cover_letter_text or None,
+                    error_message="User chose to apply manually",
+                    description_path=desc_path,
+                )
+                emit(
+                    "APPLIED",
+                    job_title=raw_job.title,
+                    company=raw_job.company,
+                    platform=raw_job.platform,
+                    message=f"Marked for manual apply: {raw_job.title} at {raw_job.company}",
+                )
+                return
+
+        if config.bot.apply_mode == "watch":
+            # Watch mode: materials only, do not submit
+            emit(
+                "APPLIED",
+                job_title=raw_job.title,
+                company=raw_job.company,
+                platform=raw_job.platform,
+                message=f"Watch mode — materials ready for {raw_job.title}",
+            )
+            return
+
+        browser = BrowserManager(config)
+        page = browser.get_page()
+
+        emit(
+            "APPLYING",
+            job_title=raw_job.title,
+            company=raw_job.company,
+            platform=raw_job.platform,
+            message=f"Applying via {detect_ats(raw_job.apply_url) or raw_job.platform}...",
+        )
+
+        result = _apply_to_job(
+            scored, resume_path, cover_letter_text, config, page, db=db,
+        )
+
+        if result.login_required:
+            domain = result.login_domain or "unknown"
+            portal_type = result.login_portal_type or "generic"
+            emit(
+                "LOGIN_REQUIRED",
+                job_title=raw_job.title,
+                company=raw_job.company,
+                platform=raw_job.platform,
+                domain=domain,
+                portal_type=portal_type,
+                apply_url=raw_job.apply_url,
+                message=f"Login required at {domain}",
+            )
+            state.begin_login_gate(domain, portal_type, raw_job.apply_url)
+            login_decision = state.wait_for_login()
+            if login_decision == "done":
+                result = _apply_to_job(
+                    scored, resume_path, cover_letter_text, config, page, db=db,
+                )
+            else:
+                result = ApplyResult(
+                    success=False,
+                    manual_required=True,
+                    error_message=f"Login skipped at {domain}",
+                )
+
+        status = "applied" if result.success else (
+            "manual_required" if result.manual_required else "error"
+        )
+        db.update_application_result(
+            application_id,
+            status=status,
+            resume_path=str(resume_path) if resume_path else None,
+            cover_letter_path=str(cl_path) if cl_path else None,
+            cover_letter_text=cover_letter_text or None,
+            error_message=result.error_message,
+            description_path=desc_path,
+        )
+
+        if version_meta:
+            try:
+                import json as _json
+                entry_ids = version_meta.get("source_entry_ids", [])
+                db.save_resume_version(
+                    application_id=application_id,
+                    job_title=scored.raw.title,
+                    company=scored.raw.company,
+                    resume_md_path=version_meta.get("resume_md_path", ""),
+                    resume_pdf_path=version_meta.get("resume_pdf_path", ""),
+                    match_score=scored.score,
+                    llm_provider=version_meta.get("llm_provider"),
+                    llm_model=version_meta.get("llm_model"),
+                    reuse_source=version_meta.get("reuse_source"),
+                    source_entry_ids=_json.dumps(entry_ids) if entry_ids else None,
+                )
+            except Exception as e:
+                logger.warning("Failed to save resume version: %s", e)
+
+        if result.success:
+            state.increment_applied()
+            emit(
+                "APPLIED",
+                job_title=raw_job.title,
+                company=raw_job.company,
+                platform=raw_job.platform,
+                message=f"Applied: {raw_job.title} at {raw_job.company}",
+            )
+        else:
+            state.increment_errors()
+            emit(
+                "ERROR" if not result.manual_required else "APPLIED",
+                job_title=raw_job.title,
+                company=raw_job.company,
+                platform=raw_job.platform,
+                message=result.error_message or f"Apply finished with status {status}",
+            )
+    except Exception as e:
+        logger.exception("apply_single_application failed for %s", application_id)
+        try:
+            db.update_application_result(
+                application_id,
+                status="error",
+                error_message=str(e),
+            )
+        except Exception:
+            pass
+        emit("ERROR", message=str(e))
+    finally:
+        if browser is not None:
+            try:
+                browser.close()
+            except Exception as e:
+                logger.debug("Browser close error: %s", e)
