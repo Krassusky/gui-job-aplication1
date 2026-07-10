@@ -4,6 +4,15 @@ All notable changes to AutoApply are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.10] - 2026-07-10
+
+### Fixed
+- **Candidaturas list**: Applications API now returns paginated `{applications, total}` so imported jobs show in the UI.
+- **Apply from imported jobs**: Job detail can generate resume/cover letter and apply one discovered job through the existing review gate.
+
+### Changed
+- **Mac client mode**: Guilherme preset hides hunter-only tabs (Guia, Painel, Análises, Biblioteca); keep Candidaturas, Experiência, Dados, Configurações (including in-app Updates).
+
 ## [1.0.9] - 2026-07-09
 
 ### Added
