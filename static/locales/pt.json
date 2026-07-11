@@ -12,7 +12,10 @@
     "pausing_bot": "Pausando o bot...",
     "stopping_bot": "Parando o bot... Isso pode levar um momento.",
     "opening_browser": "Abrindo o navegador...",
-    "saving_settings": "Salvando configurações..."
+    "saving_settings": "Salvando configurações...",
+    "generating_materials": "Gerando currículo e carta...",
+    "applying_job": "Iniciando candidatura no navegador...",
+    "pulling_config": "Baixando configurações compartilhadas do servidor..."
   },
   "nav": {
     "workflow": "Guia",
@@ -368,6 +371,13 @@
     "sync_failed": "Falha no sync",
     "sync_importing": "Importando vagas do servidor de casa...",
     "sync_import_result": "Importadas {imported} vaga(s), {skipped} duplicada(s) ignorada(s)",
+    "pull_shared_config": "Baixar perfil e busca compartilhados",
+    "sync_pulling_config": "Baixando configurações compartilhadas...",
+    "sync_pull_ok": "Perfil e busca atualizados a partir do servidor de casa",
+    "sync_pull_failed": "Não foi possível baixar as configurações compartilhadas",
+    "edit_settings": "Editar",
+    "done_editing": "Concluir",
+    "settings_locked_hint": "Campos somente leitura. Clique em Editar para alterar.",
     "section_eeo": "EEO / Divulgações voluntárias (opcional)",
     "ai_description": "Configure uma API de LLM para gerar currículos e cartas de apresentação personalizados. Sua chave de API é armazenada localmente e nunca é compartilhada.",
     "login_description": "Conecte-se ao LinkedIn antes de importar seu perfil. Abra um navegador para fazer login nas suas plataformas — a sessão é salva para uso futuro.",
@@ -552,6 +562,7 @@
     "provider_key_required": "provider e api_key são obrigatórios",
     "unsupported_provider": "Provedor não suportado: {provider}",
     "sync_not_configured": "Configure a URL e o token do servidor de sync primeiro",
+    "no_local_config": "Nenhum config.json local — conclua a configuração primeiro",
     "invalid_config": "Configuração inválida: {count} erros de validação",
     "filename_content_required": "filename e content são obrigatórios",
     "filename_required": "Nome do arquivo é obrigatório",

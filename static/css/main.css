@@ -122,6 +122,29 @@ button, input, select, textarea {
 .text-muted { color: var(--text-dim); }
 .mt-auto    { margin-top: auto; }
 
+/* Mac client_mode: hide hunt-owned settings (search prefs, schedule) */
+body.client-mode .client-mode-hide { display: none !important; }
+
+/* Settings read-only / Edit unlock */
+#screen-settings.settings-locked .form-control:not([data-lock-exempt]),
+#screen-settings.settings-locked input:not([data-lock-exempt]):not([type="checkbox"]):not([type="radio"]),
+#screen-settings.settings-locked select:not([data-lock-exempt]),
+#screen-settings.settings-locked textarea:not([data-lock-exempt]) {
+  opacity: 0.72;
+  background: var(--bg-secondary, rgba(255,255,255,.04));
+  cursor: default;
+  pointer-events: none;
+}
+#screen-settings.settings-locked .tag-add-btn:not([data-lock-exempt]),
+#screen-settings.settings-locked .tag-suggestion:not([data-lock-exempt]),
+#screen-settings.settings-locked .toggle-switch:not([data-lock-exempt]),
+#screen-settings.settings-locked input[type="checkbox"]:not([data-lock-exempt]) {
+  pointer-events: none;
+  opacity: 0.65;
+}
+#screen-settings.settings-locked .settings-lock-bar #settings-lock-hint { display: inline; }
+#screen-settings:not(.settings-locked) .settings-lock-bar #settings-lock-hint { display: none; }
+
 /* ═══════════════════════════════════════════════════════════════
    BUTTONS
    ═══════════════════════════════════════════════════════════════ */

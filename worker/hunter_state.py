@@ -1,4 +1,4 @@
-"""In-memory Job Hunter activity feed for the local dashboard."""
+"""In-memory Job Hunter activity feed and run control for the local dashboard."""
 
 from __future__ import annotations
 
@@ -6,9 +6,13 @@ import threading
 from collections import deque
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
-ActivityType = Literal["found", "filtered", "saved", "error", "cycle"]
+ActivityType = Literal[
+    "found", "filtered", "saved", "error", "cycle", "status", "thermal"
+]
+
+RunState = Literal["stopped", "running", "paused_thermal", "stopping"]
 
 _MAX_EVENTS = 300
 
@@ -24,15 +28,27 @@ class HunterStats:
     started_at: str = field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
+    run_state: RunState = "stopped"
+    pause_reason: str = ""
+    sensors: dict[str, Any] = field(default_factory=dict)
 
 
 class HunterState:
-    """Thread-safe ring buffer of hunter events and counters."""
+    """Thread-safe ring buffer of hunter events, counters, and run control."""
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._events: deque[dict[str, Any]] = deque(maxlen=_MAX_EVENTS)
         self.stats = HunterStats()
+        self._want_running = False
+        self._stop_cycle = threading.Event()
+        self._hunt_thread: threading.Thread | None = None
+        self._config_loader: Callable[[], Any] | None = None
+        self._db = None
+
+    def configure(self, *, config_loader: Callable[[], Any], db: Any) -> None:
+        self._config_loader = config_loader
+        self._db = db
 
     def record(
         self,
@@ -77,6 +93,66 @@ class HunterState:
     def get_stats_dict(self) -> dict[str, Any]:
         with self._lock:
             return asdict(self.stats)
+
+    def set_run_state(self, state: RunState, reason: str = "", sensors: dict | None = None) -> None:
+        with self._lock:
+            self.stats.run_state = state
+            self.stats.pause_reason = reason
+            if sensors is not None:
+                self.stats.sensors = sensors
+
+    def update_sensors(self, sensors: dict) -> None:
+        with self._lock:
+            self.stats.sensors = sensors
+
+    def want_running(self) -> bool:
+        with self._lock:
+            return self._want_running
+
+    def cycle_should_stop(self) -> bool:
+        return self._stop_cycle.is_set() or not self.want_running()
+
+    def request_start(self) -> dict[str, Any]:
+        """Start hunting (idempotent). Returns status payload."""
+        with self._lock:
+            if self._want_running and self._hunt_thread and self._hunt_thread.is_alive():
+                return {"ok": True, "run_state": self.stats.run_state, "message": "already running"}
+            if self._config_loader is None or self._db is None:
+                return {"ok": False, "error": "Hunter not configured"}
+            self._want_running = True
+            self._stop_cycle.clear()
+            self.stats.run_state = "running"
+            self.stats.pause_reason = ""
+            config_loader = self._config_loader
+            db = self._db
+
+        from worker.job_hunter import hunt_loop
+
+        def _target() -> None:
+            try:
+                hunt_loop(config_loader, db)
+            finally:
+                with self._lock:
+                    self._want_running = False
+                    if self.stats.run_state != "paused_thermal":
+                        self.stats.run_state = "stopped"
+                    self._hunt_thread = None
+
+        thread = threading.Thread(target=_target, name="job-hunter-loop", daemon=True)
+        with self._lock:
+            self._hunt_thread = thread
+        thread.start()
+        self.record("status", message="Hunt started")
+        return {"ok": True, "run_state": "running"}
+
+    def request_stop(self) -> dict[str, Any]:
+        with self._lock:
+            self._want_running = False
+            self.stats.run_state = "stopping"
+            self.stats.pause_reason = "stopped by user"
+            self._stop_cycle.set()
+        self.record("status", message="Hunt stop requested")
+        return {"ok": True, "run_state": "stopping"}
 
 
 # Singleton used by job hunter + sync dashboard routes

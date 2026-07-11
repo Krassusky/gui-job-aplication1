@@ -16,6 +16,13 @@ def test_dashboard_html_route():
 
 
 def test_hunter_dashboard_api(tmp_path, monkeypatch):
+    monkeypatch.delenv("AUTOAPPLY_SYNC_TOKEN", raising=False)
+    monkeypatch.delenv("AUTOAPPLY_HUNTER_PASSWORD", raising=False)
+    monkeypatch.delenv("AUTOAPPLY_HUNTER_PASSWORD_HASH", raising=False)
+    monkeypatch.setattr("config.settings.get_data_dir", lambda: tmp_path)
+    monkeypatch.setattr("worker.sync_server.get_data_dir", lambda: tmp_path)
+    monkeypatch.setattr("worker.hunter_auth.get_data_dir", lambda: tmp_path)
+
     state = HunterState()
     monkeypatch.setattr("worker.sync_server.hunter_state", state)
 

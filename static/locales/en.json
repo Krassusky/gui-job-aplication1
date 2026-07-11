@@ -12,7 +12,10 @@
     "pausing_bot": "Pausing bot...",
     "stopping_bot": "Stopping bot... This may take a moment.",
     "opening_browser": "Opening browser...",
-    "saving_settings": "Saving settings..."
+    "saving_settings": "Saving settings...",
+    "generating_materials": "Generating resume and cover letter...",
+    "applying_job": "Starting application in browser...",
+    "pulling_config": "Pulling shared settings from home server..."
   },
   "nav": {
     "workflow": "Guide",
@@ -368,6 +371,13 @@
     "sync_failed": "Sync failed",
     "sync_importing": "Importing jobs from home server...",
     "sync_import_result": "Imported {imported} job(s), skipped {skipped} duplicate(s)",
+    "pull_shared_config": "Pull shared profile & search",
+    "sync_pulling_config": "Pulling shared settings...",
+    "sync_pull_ok": "Shared profile and search settings updated from home server",
+    "sync_pull_failed": "Could not pull shared settings",
+    "edit_settings": "Edit",
+    "done_editing": "Done",
+    "settings_locked_hint": "Fields are read-only. Click Edit to change.",
     "section_eeo": "EEO / Voluntary Disclosures (optional)",
     "ai_description": "Configure an LLM API to generate tailored resumes and cover letters. Your API key is stored locally and never shared.",
     "login_description": "Connect to LinkedIn before importing your profile. Open a browser to log into your job platforms — your session is saved for future use.",
@@ -552,6 +562,7 @@
     "provider_key_required": "provider and api_key are required",
     "unsupported_provider": "Unsupported provider: {provider}",
     "sync_not_configured": "Configure sync server URL and token first",
+    "no_local_config": "No local config.json found — complete setup first",
     "invalid_config": "Invalid configuration: {count} validation errors",
     "filename_content_required": "filename and content are required",
     "filename_required": "Filename is required",

@@ -40,6 +40,7 @@ const LLM_PROVIDER_LABELS = {
 let llmProviders = [];
 let llmActiveId = '';
 let editingLlmId = null;
+let settingsEditUnlocked = false;
 
 /** Human-readable names for locale codes (FR-134). */
 const LOCALE_NAMES = {
@@ -130,7 +131,35 @@ export async function loadSettings() {
     loadBrowserInfo();
     _loadLocaleDropdown();
     initProfileImportButtons();
+    applySettingsLockState(true);
   } catch { }
+}
+
+/** Gray out filled settings until the user clicks Edit. */
+export function applySettingsLockState(forceLock) {
+  const screen = document.getElementById('screen-settings');
+  if (!screen) return;
+  if (forceLock) settingsEditUnlocked = false;
+  const locked = !settingsEditUnlocked;
+  screen.classList.toggle('settings-locked', locked);
+  const btn = document.getElementById('btn-settings-edit');
+  if (btn) {
+    btn.textContent = locked ? t('settings.edit_settings') : t('settings.done_editing');
+  }
+  screen.querySelectorAll('input, select, textarea, button.tag-add-btn').forEach(el => {
+    if (el.dataset.lockExempt === '1' || el.closest('[data-lock-exempt="1"]')) return;
+    if (el.id === 'btn-settings-edit') return;
+    if (el.type === 'file') return;
+    el.disabled = locked;
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+      el.readOnly = locked;
+    }
+  });
+}
+
+export function toggleSettingsEdit() {
+  settingsEditUnlocked = !settingsEditUnlocked;
+  applySettingsLockState(false);
 }
 
 /** Populate locale dropdown from GET /api/locales (FR-131). */
@@ -319,6 +348,7 @@ export async function saveSettings() {
     const msg = document.getElementById('settings-saved-msg');
     msg.classList.remove('hidden');
     setTimeout(() => msg.classList.add('hidden'), 2500);
+    applySettingsLockState(true);
   } catch {
     alert(t('settings.save_error'));
   } finally {
@@ -887,6 +917,39 @@ export async function importJobsFromServer() {
     status.style.color = '#34d399';
   } catch (e) {
     status.textContent = e.message || t('settings.sync_failed');
+    status.style.color = '#f87171';
+  } finally {
+    hideLoading();
+    setButtonLoading(btn, false);
+  }
+}
+
+export async function pullSharedConfig() {
+  const status = document.getElementById('sync-import-status');
+  const btn = document.getElementById('btn-pull-config');
+  setButtonLoading(btn, true);
+  showLoading(t('loading.pulling_config'));
+  status.textContent = t('settings.sync_pulling_config');
+  status.style.color = 'var(--text-dim)';
+  try {
+    await fetch('/api/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sync: {
+          sync_server_url: document.getElementById('set-sync-url').value.trim(),
+          sync_token: document.getElementById('set-sync-token').value.trim(),
+        },
+      }),
+    });
+    const res = await fetch('/api/sync/pull-config', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || t('settings.sync_pull_failed'));
+    status.textContent = t('settings.sync_pull_ok');
+    status.style.color = '#34d399';
+    await loadSettings();
+  } catch (e) {
+    status.textContent = e.message || t('settings.sync_pull_failed');
     status.style.color = '#f87171';
   } finally {
     hideLoading();

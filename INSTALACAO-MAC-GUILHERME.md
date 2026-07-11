@@ -1,6 +1,6 @@
-# Job Apply Assistant — Instalação macOS (Guilherme) v1.0.11
+# Job Apply Assistant — Instalação macOS (Guilherme) v1.0.12
 
-Este guia é para instalar a **versão 1.0.11** no Mac do Guilherme.  
+Este guia é para instalar a **versão 1.0.12** no Mac do Guilherme.  
 Nesta build, **perfil, currículo, experiências e chave Groq** são aplicados automaticamente na **primeira abertura**.
 
 > **Já tem o app instalado?** Abra **Configurações → Updates → Check for updates → Update now**.  
@@ -15,12 +15,12 @@ Nesta build, **perfil, currículo, experiências e chave Groq** são aplicados a
 
 Baixe o zip **mac-arm64** (Mac com chip M1/M2/M3/M4):
 
-https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.11
+https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.12
 
 Arquivo esperado:
 
 ```text
-JobApplyAssistant-1.0.11-mac-arm64.zip
+JobApplyAssistant-1.0.12-mac-arm64.zip
 ```
 
 ---
@@ -38,8 +38,8 @@ Copie e cole **linha por linha** (ajuste o caminho se o zip estiver em outra pas
 
 ```bash
 cd ~/Downloads
-unzip -o JobApplyAssistant-1.0.11-mac-arm64.zip -d JobApplyAssistant-1.0.11
-cd JobApplyAssistant-1.0.11
+unzip -o JobApplyAssistant-1.0.12-mac-arm64.zip -d JobApplyAssistant-1.0.12
+cd JobApplyAssistant-1.0.12
 ls -la
 ```
 
@@ -126,11 +126,21 @@ Inclui:
 | Arquivos de experiência (IA) | Sim |
 | Chave Groq | Sim (nesta build) |
 | Login LinkedIn (sessão) | **Não** — passo manual abaixo |
-| Vagas do PC de casa | **Não** — import manual abaixo |
+| Vagas / perfil compartilhado do PC de casa | **Não** — sync manual abaixo |
 
 ---
 
-## 8. Configuração única no app (depois de abrir)
+## 8. Configuração no app (depois de abrir)
+
+### 8.0 O que **não** é a senha do Mac app
+
+| Onde | Para quê | Credencial |
+|------|----------|------------|
+| **Mac app** → Settings → Sync token | Importar vagas e puxar perfil/busca | **Token de sync** (peça ao Luis) — **não** é senha de usuário |
+| **Navegador** → https://jobs.krassusky.com/dashboard | Ver/editar busca no servidor (opcional) | Login **guilherme** + senha (Luis envia **à parte**) |
+| **Mac app** → Platform Login → LinkedIn | Sessão do LinkedIn no Safari do app | E-mail/senha do **LinkedIn** |
+
+O campo **Sync token** no Mac **não** aceita a senha do dashboard. São coisas diferentes.
 
 ### 8.1 LinkedIn (uma vez)
 
@@ -138,28 +148,50 @@ Inclui:
 2. Faça login com **e-mail e senha** do LinkedIn  
 3. **Não use** “Entrar com Google” (bloqueado no navegador do app)
 
-### 8.2 Importar vagas do PC de casa
+### 8.2 Sync com o servidor de casa (obrigatório)
 
-Peça ao Krassusky:
+Peça ao **Luis**:
 
-- **URL:** `https://jobs.krassusky.com`  
-  (Cloudflare Tunnel — funciona de qualquer rede, sem mesma Wi‑Fi)
-- **Token:** arquivo `SYNC-TOKEN-FOR-GUILHERME.txt` no PC Windows
+- **URL:** `https://jobs.krassusky.com`
+- **Sync token:** o mesmo valor de `AUTOAPPLY_SYNC_TOKEN` / arquivo `~/.autoapply/.sync_token` no servidor (Luis envia por canal privado — **não** está neste guia)
 
 No app:
 
 1. **Settings** → **Import Jobs from Home Server**
-2. Cole URL e token
-3. **Test connection**
-4. **Import pending jobs**
-5. Abra **Candidaturas** (aba principal neste Mac) — as vagas importadas aparecem com status **Discovered**
-6. Clique numa vaga → veja JD / URL → **Generate Resume & Cover Letter** → **Apply to This Job**
-7. Quando a carta aparecer, revise e clique **Approve & Apply**
+2. Cole:
+   - **Sync server URL:** `https://jobs.krassusky.com`
+   - **Sync token:** o token que o Luis enviou
+3. **Test connection** (deve dar OK)
+4. **Import pending jobs** — traz vagas descobertas pelo caçador
+5. **Pull shared profile & search** — copia perfil + filtros de busca do servidor para o Mac (mantém chave Groq e caminhos locais de currículo)
+6. Abra **Candidaturas** — vagas importadas aparecem com status **Discovered**
+7. Clique numa vaga → **Generate Resume & Cover Letter** → **Apply to This Job**
+8. Quando a carta aparecer, revise e clique **Approve & Apply**
 
-Abas neste Mac (modo cliente): **Candidaturas**, **Arquivos de experiência**, **Dados para candidaturas**, **Configurações**.  
-(Guia, Painel, Análises e Biblioteca de currículos ficam ocultos — a busca de vagas roda no PC Windows.)
+Durante import / generate / apply, o app mostra um **overlay de carregamento** — aguarde terminar.
+
+### 8.3 Settings em cinza + botão **Edit**
+
+Os campos de configuração ficam **somente leitura** (cinza) para evitar mudanças acidentais.
+
+- Clique **Edit** (Editar) para alterar
+- Clique **Done** (Concluir) / salve para voltar ao modo bloqueado
+- Os botões de sync (**Test**, **Import**, **Pull shared…**) continuam usáveis mesmo com settings bloqueados
+
+### 8.4 Modo cliente neste Mac
+
+Abas: **Candidaturas**, **Arquivos de experiência**, **Dados para candidaturas**, **Configurações**.  
+(Guia, Painel, Análises, Biblioteca de currículos e preferências de busca/agenda ficam ocultos — a busca roda no servidor.)
 
 Seus dados em `~/.autoapply/autoapply.db` **não são apagados** ao atualizar o app.
+
+### 8.5 Dashboard web (opcional — não é o Mac app)
+
+Se o Luis pedir para você ajustar filtros no servidor:
+
+1. Abra https://jobs.krassusky.com/dashboard no navegador
+2. Entre com o usuário **guilherme** e a senha que o Luis enviar **separadamente**
+3. Isso **não** substitui o sync token no Mac
 
 ---
 
@@ -214,7 +246,9 @@ Resposta esperada: `{"status":"ok"}`
 |----------|---------|
 | App não abre no duplo clique | Use `open /Applications/JobApplyAssistant.app` ou o binário direto (secção 6) |
 | “App danificado” / quarentena | Rode `xattr -dr com.apple.quarantine` de novo |
-| Import falha | URL `https://jobs.krassusky.com` + token; confirme que o tunnel Cloudflare e o Job Hunter estão ativos |
+| Import / pull falha | URL `https://jobs.krassusky.com` + **sync token** (não a senha do dashboard); confirme que o Job Hunter está ativo |
+| Confundiu token com senha do site | Dashboard = usuário/senha; Mac = sync token. Peça de novo ao Luis se precisar |
+| Settings cinza / não edita | Clique **Edit** no topo das configurações |
 | Groq / IA não responde | Settings → AI Provider → validar Groq |
 | LinkedIn não conecta | E-mail/senha, não Google; tente de novo no login do app |
 
@@ -224,4 +258,4 @@ Resposta esperada: `{"status":"ok"}`
 
 - Releases: https://github.com/Krassusky/gui-job-aplication1/releases  
 - Sync API (Guilherme): https://jobs.krassusky.com  
-- Dashboard do caçador (só no PC de casa / LAN): http://127.0.0.1:8765/dashboard  
+- Dashboard do caçador (login separado): https://jobs.krassusky.com/dashboard  

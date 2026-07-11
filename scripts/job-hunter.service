@@ -1,0 +1,21 @@
+[Unit]
+Description=AutoApply Job Hunter (Ubuntu)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/gui-job-aplication
+EnvironmentFile=-%h/gui-job-aplication/.env
+Environment=AUTOAPPLY_SYNC_HOST=127.0.0.1
+Environment=AUTOAPPLY_SYNC_PORT=8765
+Environment=AUTOAPPLY_OLLAMA_FALLBACK=1
+Environment=PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring
+ExecStart=%h/gui-job-aplication/venv/bin/python -m worker.job_hunter --stopped
+Restart=on-failure
+RestartSec=10
+
+# Keep Cloudflare pointing at localhost:8765 on this machine (no Windows tunnel).
+
+[Install]
+WantedBy=default.target

@@ -1,4 +1,11 @@
-"""Mac client routes for importing jobs from a remote Job Hunter server."""
+"""Mac client routes for importing jobs + shared config from a remote Job Hunter.
+
+Local Mac endpoints:
+  GET/PUT /api/sync/settings  — sync URL + token
+  POST    /api/sync/test      — hunter health
+  POST    /api/sync/import    — pull pending jobs
+  POST    /api/sync/pull-config — pull shared profile/search/bot into local config.json
+"""
 
 from __future__ import annotations
 
@@ -10,6 +17,7 @@ from flask import Blueprint, jsonify, request
 from config.settings import SyncConfig, get_data_dir, load_config, save_config
 from core.i18n import t
 from db.database import Database
+from worker.hunter_auth import merge_shared_config
 
 logger = logging.getLogger(__name__)
 
@@ -39,13 +47,17 @@ def _normalize_server_url(url: str) -> str:
     return url.strip().rstrip("/")
 
 
+def _auth_headers(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
+
+
 def _fetch_remote_jobs(server_url: str, token: str, since: str | None = None) -> list[dict]:
     params = {}
     if since:
         params["since"] = since
     resp = requests.get(
         f"{server_url}/api/sync/jobs",
-        headers={"Authorization": f"Bearer {token}"},
+        headers=_auth_headers(token),
         params=params,
         timeout=30,
     )
@@ -57,7 +69,7 @@ def _fetch_remote_jobs(server_url: str, token: str, since: str | None = None) ->
 def _fetch_remote_job_detail(server_url: str, token: str, job_id: int) -> dict:
     resp = requests.get(
         f"{server_url}/api/sync/jobs/{job_id}",
-        headers={"Authorization": f"Bearer {token}"},
+        headers=_auth_headers(token),
         timeout=30,
     )
     resp.raise_for_status()
@@ -67,10 +79,20 @@ def _fetch_remote_job_detail(server_url: str, token: str, job_id: int) -> dict:
 def _ack_remote_job(server_url: str, token: str, job_id: int) -> None:
     resp = requests.post(
         f"{server_url}/api/sync/jobs/{job_id}/ack",
-        headers={"Authorization": f"Bearer {token}"},
+        headers=_auth_headers(token),
         timeout=15,
     )
     resp.raise_for_status()
+
+
+def _fetch_remote_shared_config(server_url: str, token: str) -> dict:
+    resp = requests.get(
+        f"{server_url}/api/sync/config",
+        headers=_auth_headers(token),
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return resp.json()
 
 
 @sync_bp.route("/api/sync/settings", methods=["GET"])
@@ -185,4 +207,42 @@ def import_jobs():
         "imported": imported,
         "skipped": skipped,
         "errors": errors,
+    })
+
+
+@sync_bp.route("/api/sync/pull-config", methods=["POST"])
+def pull_shared_config():
+    """Pull shared profile + search + bot filters from the hunter into local config.
+
+    Does not overwrite LLM keys, sync credentials, UI flags, or local resume paths.
+    """
+    sync = _sync_settings()
+    server_url = _normalize_server_url(sync.sync_server_url)
+    if not server_url or not sync.sync_token:
+        return jsonify({"error": t("errors.sync_not_configured")}), 400
+
+    config = load_config()
+    if config is None:
+        return jsonify({"error": t("errors.no_local_config")}), 404
+
+    try:
+        remote = _fetch_remote_shared_config(server_url, sync.sync_token)
+    except requests.RequestException as e:
+        logger.warning("Failed to pull shared config: %s", e)
+        return jsonify({"error": str(e)}), 502
+
+    try:
+        merge_shared_config(config, remote)
+        # Preserve local sync settings (URL/token) and client_mode
+        config.sync = sync
+        save_config(config)
+    except Exception as e:
+        logger.exception("Failed to merge shared config")
+        return jsonify({"error": str(e)}), 400
+
+    return jsonify({
+        "success": True,
+        "profile": remote.get("profile"),
+        "search_criteria": remote.get("search_criteria"),
+        "bot": remote.get("bot"),
     })

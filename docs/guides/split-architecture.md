@@ -4,7 +4,7 @@ AutoApply can run as a **standalone desktop app** (unchanged) or as a **split de
 
 | Role | Machine | Responsibility |
 |------|---------|----------------|
-| **Job Hunter** | Ubuntu home server | 24/7 search, score, filter; save discoveries; optional sync API |
+| **Job Hunter** | Ubuntu home server (iMac) | 24/7 search, score, filter; thermal pause; sync API + Start/Stop dashboard |
 | **Mac Client** | Friend's Mac (Guilherme) | Import shared finds; review; apply via local browser |
 
 A third node (friend's home PC with AI) can be added later without changing this design.
@@ -62,25 +62,19 @@ export AUTOAPPLY_SYNC_PORT=8765
 ### Run the hunter
 
 ```bash
-# Foreground (sync API starts automatically in a background thread)
-python -m worker.job_hunter
+# Foreground (loads .env, starts sync + hunt)
+./scripts/start_job_hunter.sh
 
-# Or via script
-python scripts/run_job_hunter.py
+# Dashboard only until you click Start
+./scripts/start_job_hunter.sh --stopped
 
 # Single cycle (testing)
 python -m worker.job_hunter --once
-
-# Without embedded sync API (e.g. you run sync separately)
-python -m worker.job_hunter --no-sync
 ```
 
-The worker:
+Dashboard: `http://127.0.0.1:8765/dashboard` — **Start search** / **Stop search**, live temps, pending Mac sync.
 
-- Runs search → score → filter only (no apply, no review gate)
-- Saves passing jobs as `pending_sync` in `~/.autoapply/autoapply.db`
-- Waits `search_interval_seconds` between cycles (from config)
-- Logs structured lines to stdout
+Thermal: hunting auto-pauses when CPU/SMC/fan exceed Immich thresholds (`HUNTER_HOT_*` in `.env`) and resumes when cool.
 
 ### Hunter dashboard (local browser)
 
@@ -88,14 +82,19 @@ While the hunter is running, open:
 
 - `http://127.0.0.1:8765/dashboard` on the hunter machine
 - `http://<lan-or-tailscale-ip>:8765/dashboard` from another device on the same network
+- Public: `https://jobs.krassusky.com/dashboard` (requires login)
 
-The page auto-refreshes every 10 seconds and shows:
+**Auth:** When `AUTOAPPLY_SYNC_TOKEN` or hunter password is set, the UI requires sign-in
+(username/password or the sync token). Start/Stop and shared settings are not open publicly.
+
+The page auto-refreshes every 5 seconds and shows:
 
 - Cycle stats (found / filtered / saved)
 - Jobs waiting for Mac sync (`pending_sync`)
 - Live activity feed (found, filtered, saved, errors)
+- **Shared settings** tab: edit profile / search / bot filters → `~/.autoapply/config.json`
 
-JSON API (no auth): `GET /api/hunter/dashboard`
+JSON API: `GET /api/hunter/dashboard` (session or Bearer auth when configured)
 
 ### systemd example (optional)
 
@@ -149,6 +148,7 @@ Firewall: allow inbound TCP on port `8765` on the hunter (or use Tailscale ACLs)
    - **Sync server URL**: `https://jobs.krassusky.com` (Cloudflare) **or** `http://<tailscale-ip>:8765`
    - **Sync token**: same value as `AUTOAPPLY_SYNC_TOKEN` on the hunter
 4. Click **Test connection**, then **Import pending jobs**.
+5. Click **Pull shared profile & search** to copy profile + search filters from the hunter into local `~/.autoapply/config.json` (LLM keys and local resume paths are kept).
 
 Imported jobs appear in **Applications** with status `discovered` for review/apply. The Mac acks each job on the hunter so it is not re-imported.
 
@@ -182,6 +182,28 @@ Auth: `Authorization: Bearer <AUTOAPPLY_SYNC_TOKEN>`
 | GET | `/api/sync/jobs?since=<iso>` | List `pending_sync` jobs |
 | GET | `/api/sync/jobs/{id}` | Job detail + description |
 | POST | `/api/sync/jobs/{id}/ack` | Mark imported on client |
+| GET | `/api/sync/config` | Shared profile + search_criteria + bot filters |
+| PUT | `/api/sync/config` | Update shared subset on hunter `~/.autoapply/config.json` |
+
+Hunter web UI (session cookie after login, or Bearer token):
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/hunter/session` | Auth status |
+| POST | `/api/hunter/login` | `{username, password}` → session cookie |
+| POST | `/api/hunter/logout` | Clear session |
+| GET/PUT | `/api/hunter/config` | Same shared config as `/api/sync/config` |
+| POST | `/api/hunter/start` / `stop` | Control hunt (requires login or Bearer) |
+
+Dashboard login credentials (do not commit):
+
+```bash
+export AUTOAPPLY_HUNTER_USER=admin
+# Preferred:
+export AUTOAPPLY_HUNTER_PASSWORD_HASH="$(python -c 'from werkzeug.security import generate_password_hash; print(generate_password_hash("YOUR_PASSWORD"))')"
+# Or plaintext: AUTOAPPLY_HUNTER_PASSWORD=...
+# Or file: ~/.autoapply/hunter_auth.json → {"username","password_hash"}
+```
 
 Mac app endpoints (local):
 
@@ -190,6 +212,7 @@ Mac app endpoints (local):
 | GET/PUT | `/api/sync/settings` | Read/update sync URL + token |
 | POST | `/api/sync/test` | Test hunter connectivity |
 | POST | `/api/sync/import` | Pull and import pending jobs |
+| POST | `/api/sync/pull-config` | Pull shared profile/search into local config |
 
 ## 6. Phase 2 (not in this MVP)
 

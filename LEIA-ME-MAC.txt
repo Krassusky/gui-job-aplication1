@@ -3,8 +3,8 @@ JobApply Assistant — Guia rápido (macOS)
 
 DOWNLOAD
 --------
-Baixe a versão **1.0.11** (Guilherme — perfil pré-preenchido) em:
-https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.11
+Baixe a versão **1.0.12** (Guilherme — perfil pré-preenchido) em:
+https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.12
 
 Já instalado? Configurações → Updates → Check for updates → Update now
 (dados em ~/.autoapply/ não são apagados; o app reinicia sozinho e cria atalho na Área de Trabalho)
@@ -38,8 +38,14 @@ experiências e chave Groq (quando a build inclui o preset).
 
 Você só precisa:
 1. Settings → Platform Login → LinkedIn (e-mail/senha — não use Google)
-2. Settings → Import Jobs from Home Server (URL + token do PC de casa)
+2. Settings → Import Jobs from Home Server
+   - URL: https://jobs.krassusky.com
+   - Sync token: peça ao Luis (não é a senha do dashboard)
+   - Test → Import pending jobs → Pull shared profile & search
 3. Applications → revisar vagas importadas
+
+Dashboard web (opcional): https://jobs.krassusky.com/dashboard
+Login guilherme + senha (Luis envia à parte) — NÃO use no campo Sync token.
 
 Se instalou uma build genérica (sem preset), use Configurar Guilherme.command
 no pacote de setup ou peça o zip guilherme-setup.

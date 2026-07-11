@@ -4,6 +4,18 @@ All notable changes to AutoApply are documented in this file.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.12] - 2026-07-10
+
+### Added
+- **Pull shared profile & search**: Mac Settings can pull profile + search filters from the hunter (`POST /api/sync/pull-config`) without overwriting local LLM keys or resume paths.
+- **Hunter dashboard login**: Username/password (or sync token) protects Start/Stop and shared settings at `https://jobs.krassusky.com/dashboard`.
+- **Settings Edit lock**: Filled settings stay read-only until **Edit**; sync import controls stay usable.
+- **Loading overlays**: Clear feedback while generating materials, applying, and pulling shared config.
+- **Hunter ops**: Thermal pause, systemd unit, start script, and `.env.example` for Ubuntu Job Hunter.
+
+### Changed
+- **Mac client_mode**: Job preference / schedule sections stay hidden; focus on Applications + sync + apply.
+
 ## [1.0.11] - 2026-07-10
 
 ### Fixed

@@ -5,6 +5,7 @@ import { state } from './state.js';
 import { escHtml, escAttr, matchColor, badgeClass } from './helpers.js';
 import { closeModal, openModal } from './modals.js';
 import { t } from './i18n.js';
+import { showLoading, hideLoading } from './loading.js';
 
 const APP_STATUSES = [
   'discovered', 'applied', 'interview', 'rejected', 'offer',
@@ -195,6 +196,7 @@ export async function saveDetailNotes(id) {
 export async function generateApplicationMaterials(id) {
   const statusEl = document.getElementById('app-detail-action-status');
   if (statusEl) statusEl.textContent = t('applications.generating');
+  showLoading(t('loading.generating_materials'));
   try {
     const res = await fetch(`/api/applications/${id}/generate`, { method: 'POST' });
     const data = await res.json();
@@ -209,12 +211,15 @@ export async function generateApplicationMaterials(id) {
     }
   } catch {
     if (statusEl) statusEl.textContent = t('applications.generate_error');
+  } finally {
+    hideLoading();
   }
 }
 
 export async function applyToApplication(id) {
   const statusEl = document.getElementById('app-detail-action-status');
   if (statusEl) statusEl.textContent = t('applications.apply_starting');
+  showLoading(t('loading.applying_job'));
   try {
     const res = await fetch(`/api/applications/${id}/apply`, { method: 'POST' });
     const data = await res.json();
@@ -226,6 +231,8 @@ export async function applyToApplication(id) {
     closeModal('modal-app-detail');
   } catch {
     if (statusEl) statusEl.textContent = t('applications.apply_error');
+  } finally {
+    hideLoading();
   }
 }
 

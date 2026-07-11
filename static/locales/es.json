@@ -12,7 +12,10 @@
     "pausing_bot": "Pausando el bot...",
     "stopping_bot": "Deteniendo el bot... Esto puede tardar un momento.",
     "opening_browser": "Abriendo el navegador...",
-    "saving_settings": "Guardando configuración..."
+    "saving_settings": "Guardando configuración...",
+    "generating_materials": "Generando CV y carta...",
+    "applying_job": "Iniciando postulación en el navegador...",
+    "pulling_config": "Descargando configuración compartida del servidor..."
   },
   "nav": {
     "workflow": "Guía",
@@ -361,6 +364,24 @@
     "updates_help": "Busca nuevas versiones en GitHub e instálalas sin salir de la app.",
     "section_shortcuts": "Accesos directos en el escritorio",
     "shortcuts_help": "Crea un icono en el Escritorio y en el menú Inicio para abrir la app con un clic.",
+    "section_job_sync": "Importar empleos del servidor de casa",
+    "job_sync_hint": "Conéctate al Job Hunter (Cloudflare/Tailscale/LAN) para importar empleos descubiertos y postular desde este Mac.",
+    "label_sync_url": "URL del servidor de sync",
+    "label_sync_token": "Token de sync",
+    "test_sync": "Probar conexión",
+    "import_jobs": "Importar empleos pendientes",
+    "sync_testing": "Probando conexión...",
+    "sync_ok": "Conexión correcta",
+    "sync_failed": "Error de sync",
+    "sync_importing": "Importando empleos del servidor de casa...",
+    "sync_import_result": "Importados {imported} empleo(s), {skipped} duplicado(s) omitidos",
+    "pull_shared_config": "Descargar perfil y búsqueda compartidos",
+    "sync_pulling_config": "Descargando configuración compartida...",
+    "sync_pull_ok": "Perfil y búsqueda actualizados desde el servidor de casa",
+    "sync_pull_failed": "No se pudo descargar la configuración compartida",
+    "edit_settings": "Editar",
+    "done_editing": "Listo",
+    "settings_locked_hint": "Campos de solo lectura. Haz clic en Editar para cambiar.",
     "upload_failed": "Error al subir"
   },
   "shortcuts": {

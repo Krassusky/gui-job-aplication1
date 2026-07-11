@@ -36,15 +36,25 @@ Na primeira abertura, o app instala automaticamente:
   - Chave Groq (se incluída na build)
 
 Você só precisa fazer uma vez:
-  - Settings → Platform Login → LinkedIn (e-mail/senha, não Google)
-  - Settings → Import Jobs from Home Server (URL + token do PC de casa)
+  1. Settings → Platform Login → LinkedIn (e-mail/senha, não Google)
+  2. Settings → Import Jobs from Home Server:
+       URL:  https://jobs.krassusky.com
+       Token: peça o SYNC TOKEN ao Luis (não é a senha do site)
+       → Test connection
+       → Import pending jobs
+       → Pull shared profile & search
+  3. Candidaturas → Generate Resume → Apply → Approve
 
-Depois do import:
-  - Abra Candidaturas → clique na vaga → Generate Resume → Apply to This Job
-  - Revise a carta e aprove
+IMPORTANTE — duas credenciais diferentes:
+  - Mac app (campo Sync token) = token de sync (Luis envia)
+  - Site https://jobs.krassusky.com/dashboard = login guilherme
+    (senha enviada à parte pelo Luis — NÃO use no campo Sync token)
+
+Settings em cinza? Clique Edit para alterar; sync continua usável.
+Durante import/generate/apply aparece um overlay de carregamento.
 
 Abas neste Mac: Candidaturas, Experiência, Dados, Configurações
-(Painel/busca fica no PC Windows)
+(Painel/busca fica no servidor de casa)
 
 Se o Mac bloquear na primeira abertura:
    - Clique com o botão direito em JobApplyAssistant.app → Abrir → Abrir
@@ -53,7 +63,7 @@ Se o Mac bloquear na primeira abertura:
 Não precisa do Google Chrome — no Mac usamos o motor Safari integrado.
 
 Download atualizado (Guilherme — perfil pré-preenchido):
-https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.11
+https://github.com/Krassusky/gui-job-aplication1/releases/tag/v1.0.12
 
 Já instalado? No app: Configurações → Updates → Check for updates → Update now
 (dados em ~/.autoapply/ não são apagados; o app reinicia sozinho e cria atalho na Área de Trabalho)
